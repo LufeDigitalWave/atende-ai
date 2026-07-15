@@ -6,6 +6,9 @@
 #   - db   : PostgreSQL 16 + pgvector
 #   - api  : FastAPI backend (port 8002 → internal 8000)
 #   - web  : React + Vite (port 5175 → nginx 80)
+#
+# Traefik labels register the subdomain with the EasyPanel Traefik instance.
+# Domain: atendeai.lufedigitalwave.com.br
 # ============================================================
 
 services:
@@ -26,6 +29,7 @@ services:
       retries: 10
     networks:
       - atende_net
+      - easypanel
 
   api:
     build:
@@ -42,11 +46,20 @@ services:
       - "8002:8000"
     networks:
       - atende_net
+      - easypanel
     command: >
       sh -c "alembic upgrade head &&
              python -c 'import asyncio; from app.seeds.knowledge import main; asyncio.run(main())' &&
              python -c 'import asyncio; from app.seeds.admin import main; asyncio.run(main())' &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
+      - "traefik.http.routers.atende-api.rule=Host(`atendeai.lufedigitalwave.com.br`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.atende-api.entrypoints=websecure"
+      - "traefik.http.routers.atende-api.tls=true"
+      - "traefik.http.routers.atende-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.atende-api.loadbalancer.server.port=8000"
 
   web:
     build:
@@ -61,9 +74,18 @@ services:
     ports:
       - "5175:80"
     environment:
-      VITE_API_URL: ${VITE_API_URL:-https://atende.lufedigitalwave.com.br}
+      VITE_API_URL: ${VITE_API_URL:-https://atendeai.lufedigitalwave.com.br}
     networks:
       - atende_net
+      - easypanel
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
+      - "traefik.http.routers.atende-web.rule=Host(`atendeai.lufedigitalwave.com.br`)"
+      - "traefik.http.routers.atende-web.entrypoints=websecure"
+      - "traefik.http.routers.atende-web.tls=true"
+      - "traefik.http.routers.atende-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.atende-web.loadbalancer.server.port=80"
 
 volumes:
   atende_pgdata:
@@ -73,3 +95,5 @@ networks:
   atende_net:
     driver: overlay
     attachable: true
+  easypanel:
+    external: true
