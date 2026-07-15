@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
     agent_model: str = "claude-haiku-4-5"
+    agent_prompt_version: str = "sofia_v1"  # legacy; factory v2 uses template directly
     agent_temperature: float = 0.4
 
     # LLM — Factory (niche profile generation)
