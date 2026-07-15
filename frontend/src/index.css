@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .chat-bubble-user {
+    @apply ml-auto rounded-lg rounded-br-none bg-sofia-500 px-4 py-2 text-white text-sm max-w-xs break-words;
+  }
+
+  .chat-bubble-agent {
+    @apply mr-auto rounded-lg rounded-bl-none bg-gray-100 px-4 py-2 text-gray-900 text-sm max-w-xs break-words;
+  }
+
+  .typing-indicator {
+    @apply flex gap-1 px-3 py-2;
+  }
+
+  .typing-dot {
+    @apply h-2 w-2 rounded-full bg-gray-400 animate-pulse-dot;
+  }
+
+  .quick-reply-btn {
+    @apply inline-block px-3 py-1 text-xs rounded-full bg-sofia-100 text-sofia-700 border border-sofia-300 hover:bg-sofia-200 transition-colors cursor-pointer;
+  }
+}
+
+body {
+  @apply bg-white text-gray-900 font-sans;
+}
+
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded hover:bg-gray-400;
+}

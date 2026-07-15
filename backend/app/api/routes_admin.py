@@ -1,0 +1,229 @@
+"""Admin routes — login, conversas, leads, custos, agente.
+
+All routes require JWT auth.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
+from app.core.security import create_access_token, verify_password, hash_password
+from app.core.config import get_settings
+from app.models import AdminUser, Session, Lead, LeadState, UsageLog
+from app.schemas.chat import (
+    AdminLoginRequest,
+    AdminLoginResponse,
+    AdminSessionSummary,
+    AdminSessionsList,
+    AdminCostsResponse,
+    AdminCostsToday,
+    AdminCostsBudget,
+    AdminAgentInfo,
+)
+from app.services.budget import get_daily_usage
+
+logger = structlog.get_logger("routes_admin")
+router = APIRouter(prefix="/api/admin", tags=["admin"])
+settings = get_settings()
+
+
+async def get_current_admin(
+    token: str = None, db: AsyncSession = Depends(get_db)
+) -> AdminUser:
+    """
+    Validate JWT and return admin user.
+
+    TODO: extract token from Authorization header in passo 5.
+    """
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="missing token",
+        )
+    # TODO: decode JWT and fetch user
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="invalid token",
+    )
+
+
+@router.post(
+    "/login",
+    response_model=AdminLoginResponse,
+)
+async def admin_login(
+    body: AdminLoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> AdminLoginResponse:
+    """
+    Admin login — returns JWT token.
+    """
+    # Find admin user
+    user = await db.scalar(
+        select(AdminUser).where(AdminUser.username == body.username)
+    )
+
+    if not user or not verify_password(body.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid credentials",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="user inactive",
+        )
+
+    # Create token
+    token = create_access_token(str(user.id))
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        hours=settings.jwt_expires_hours
+    )
+
+    logger.info(f"admin login: {user.username}")
+
+    return AdminLoginResponse(
+        token=token,
+        expires_at=expires_at,
+    )
+
+
+@router.get(
+    "/conversas",
+    response_model=AdminSessionsList,
+)
+async def list_conversations(
+    limit: int = 20,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+) -> AdminSessionsList:
+    """
+    List all sessions with pagination.
+    """
+    # Count total
+    total = await db.scalar(select(lambda: 1).select_from(Session))
+
+    # Fetch paginated
+    stmt = (
+        select(Session)
+        .order_by(desc(Session.created_at))
+        .limit(limit)
+        .offset(offset)
+    )
+    sessions = await db.scalars(stmt)
+
+    items = [
+        AdminSessionSummary(
+            session_id=s.id,
+            created_at=s.created_at,
+            last_activity_at=s.last_activity_at,
+            message_count=s.message_count,
+            status=s.status,
+            lead_name=s.lead.name if s.lead else None,
+            lead_state=s.lead.state if s.lead else None,
+            lead_score=s.lead.score if s.lead else None,
+        )
+        for s in sessions
+    ]
+
+    return AdminSessionsList(total=total or 0, items=items)
+
+
+@router.get(
+    "/leads",
+    response_model=dict,
+)
+async def get_leads_kanban(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+) -> dict:
+    """
+    Get leads grouped by state (kanban view).
+    """
+    result = {
+        "novo": [],
+        "em_qualificacao": [],
+        "qualificado": [],
+        "agendamento_proposto": [],
+        "handoff": [],
+    }
+
+    for state in LeadState:
+        leads = await db.scalars(
+            select(Lead).where(Lead.state == state).order_by(desc(Lead.updated_at))
+        )
+        result[state.value] = []
+        # TODO: convert to LeadOut
+
+    return result
+
+
+@router.get(
+    "/custos",
+    response_model=AdminCostsResponse,
+)
+async def get_costs(
+    days: int = 14,
+    db: AsyncSession = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+) -> AdminCostsResponse:
+    """
+    Get cost breakdown and budget status.
+    """
+    # Today's usage
+    total_tokens, total_cost = await get_daily_usage(db)
+    cost_brl = float(total_cost) * 5  # 1 USD = 5 BRL
+
+    today = AdminCostsToday(
+        calls=0,  # TODO: count from usage_log
+        input_tokens=0,  # TODO
+        output_tokens=0,  # TODO
+        cached_tokens=0,  # TODO
+        cost_usd=float(total_cost),
+        cost_brl=cost_brl,
+    )
+
+    # History (last N days)
+    history = []  # TODO: aggregate by date
+
+    # Budget
+    budget = AdminCostsBudget(
+        daily_tokens=settings.daily_token_budget,
+        used_today=total_tokens,
+        percent_used=round(100 * total_tokens / settings.daily_token_budget, 2),
+    )
+
+    return AdminCostsResponse(
+        today=today,
+        history=history,
+        budget=budget,
+    )
+
+
+@router.get(
+    "/agente",
+    response_model=AdminAgentInfo,
+)
+async def get_agent_info(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+) -> AdminAgentInfo:
+    """
+    Get current agent configuration.
+    """
+    return AdminAgentInfo(
+        provider=settings.llm_provider,
+        model=settings.agent_model,
+        prompt_version=settings.agent_prompt_version,
+        prompt_sha256="",  # TODO: compute hash of prompt file
+        temperature=settings.agent_temperature,
+        embedding_provider=settings.embedding_provider,
+        embedding_model=settings.embedding_model if settings.embedding_provider != "fake" else None,
+    )

@@ -1,0 +1,75 @@
+# ============================================================
+# Atende AI — production stack
+#   docker compose up -d
+#
+# Services:
+#   - db   : PostgreSQL 16 + pgvector
+#   - api  : FastAPI backend (port 8002 → internal 8000)
+#   - web  : React + Vite (port 5175 → nginx 80)
+# ============================================================
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: atende_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-atende}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-atende_ai}
+    volumes:
+      - atende_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-atende} -d ${POSTGRES_DB:-atende_ai}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - atende_net
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atende_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "8002:8000"
+    networks:
+      - atende_net
+    command: >
+      sh -c "alembic upgrade head &&
+             python -c 'import asyncio; from app.seeds.knowledge import main; asyncio.run(main())' &&
+             python -c 'import asyncio; from app.seeds.admin import main; asyncio.run(main())' &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://atende.lufedigitalwave.com.br}
+    container_name: atende_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5175:80"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-https://atende.lufedigitalwave.com.br}
+    networks:
+      - atende_net
+
+volumes:
+  atende_pgdata:
+    driver: local
+
+networks:
+  atende_net:
+    driver: overlay
+    attachable: true
