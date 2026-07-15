@@ -53,7 +53,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-https://atende.lufedigitalwave.com.br}
+        VITE_API_URL: ${VITE_API_URL:-https://atendeai.lufedigitalwave.com.br}
     container_name: atende_web
     restart: unless-stopped
     depends_on:
