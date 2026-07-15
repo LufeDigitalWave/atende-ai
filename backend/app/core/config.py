@@ -26,13 +26,16 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://atende:atende@db:5432/atende_ai"
     )
 
-    # LLM
+    # LLM — Agent chat
     llm_provider: Literal["fake", "claude", "openai"] = "fake"
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
     agent_model: str = "claude-haiku-4-5"
-    agent_prompt_version: str = "sofia_v1"
     agent_temperature: float = 0.4
+
+    # LLM — Factory (niche profile generation)
+    factory_model: str = "gpt-4.1-mini"
+    factory_max_niche_chars: int = 60
 
     # Embeddings
     embedding_provider: Literal["fake", "voyage"] = "fake"

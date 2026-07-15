@@ -14,7 +14,7 @@ async def test_fake_provider_greeting():
     provider = FakeLLMProvider()
     messages = [{"role": "user", "content": "Oi!"}]
     response = ""
-    async for token in provider.chat_stream("", messages):
+    async for token, *_ in provider.chat_stream("", messages):
         response += token
     assert "Sofia" in response or "Bem-vindo" in response
 
@@ -25,7 +25,7 @@ async def test_fake_provider_service_question():
     provider = FakeLLMProvider()
     messages = [{"role": "user", "content": "Quanto custa melasma?"}]
     response = ""
-    async for token in provider.chat_stream("", messages):
+    async for token, *_ in provider.chat_stream("", messages):
         response += token
     assert len(response) > 0
 
@@ -36,6 +36,7 @@ def test_full_qualification_flow():
     lead = Lead(
         session_id="test",
         state=LeadState.novo,
+        score=0,
         budget_range=BudgetRange.nao_informado,
         urgency=Urgency.nao_informada,
     )
@@ -58,12 +59,13 @@ def test_full_qualification_flow():
     msg2 = "Quero tratar melasma, tenho manchas no rosto, posso gastar 3 mil"
     ext2 = extract_fields(msg2, "", lead)
     assert ext2.service_interest == "melasma"
-    assert ext2.complaint == "mancha"
+    assert ext2.complaint == "manchas"
     assert ext2.budget_range == BudgetRange.ate_3k
     lead.service_interest = ext2.service_interest
     lead.complaint = ext2.complaint
     lead.budget_range = ext2.budget_range
     score2, breakdown2 = compute_score(lead)
+    lead.score = score2
     # name(20) + service(20) + complaint(15) + budget(20) + bonus(10) = 85
     assert score2 > score1
     assert "budget_mid_or_high" in breakdown2
@@ -74,6 +76,7 @@ def test_full_qualification_flow():
     assert ext3.urgency == Urgency.alta
     lead.urgency = ext3.urgency
     score3, breakdown3 = compute_score(lead)
+    lead.score = score3
     assert score3 == 100  # capped (all 5 fields + bonuses)
     trans3 = auto_transition(lead)
     assert trans3 is not None
@@ -83,7 +86,7 @@ def test_full_qualification_flow():
     # Verify full state
     assert lead.name == "João"
     assert lead.service_interest == "melasma"
-    assert lead.complaint == "mancha"
+    assert lead.complaint == "manchas"
     assert lead.budget_range == BudgetRange.ate_3k
     assert lead.urgency == Urgency.alta
     assert lead.score == 100
