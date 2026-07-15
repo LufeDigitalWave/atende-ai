@@ -93,7 +93,6 @@ volumes:
 
 networks:
   atende_net:
-    driver: overlay
-    attachable: true
+    driver: bridge
   easypanel:
     external: true
