@@ -1,7 +1,7 @@
 # Atende AI — Convenções do Projeto
 
 > Item de portfólio público. Tudo aqui é fictício **exceto** a IA (Claude API).
-> Última atualização: 2026-07-13.
+> Última atualização: 2026-07-15.
 
 ## Filosofia
 
@@ -143,6 +143,15 @@ chore(deps): bump anthropic-sdk to 0.42
 | Reset não roda | log do container `reset-cron`; checar TZ do container |
 | Budget excedido | `usage_log` GROUP BY DATE; ver `docs/COST_MODEL.md` |
 | Demo offline não completa funil | `FakeLLMProvider` em `services/llm.py` |
+
+---
+
+## Arquitetura — decisões da sessão 15/07
+
+1. **Factory v2 (dados-não-prompt):** LLM gera BusinessProfile JSON → template fixo renderiza system prompt. Regras de batalha vivem no template versionado.
+2. **Provider híbrido:** `gpt-4.1-mini` gera perfis (factory), `claude-haiku-4-5` conversa (agente). Prompt caching no system prompt (80% cache hit).
+3. **Redesign dark premium:** canvas escuro azulado, gradiente violeta→ciano, device frame claro, micro-animações CSS.
+4. **Sanitização:** niche input max 60 chars, sem line breaks, sem controle chars. Injection-safe.
 
 ---
 
