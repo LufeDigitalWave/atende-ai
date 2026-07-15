@@ -47,7 +47,7 @@ function App() {
   // Show niche selector if no session yet
   if (!sessionId || !agentMeta) {
     return (
-      >
+      <>
         {error && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-900/50 border border-red-700 text-red-200 px-4 py-2 rounded-lg text-sm shadow-md z-50">
             {error}
