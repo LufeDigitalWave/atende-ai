@@ -10,6 +10,7 @@ interface AgentMeta {
   companyName: string;
   niche: string;
   suggestions: string[];
+  openingMessage?: string;
 }
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
           'Quanto custa?',
           'Vocês atendem hoje?',
         ],
+        openingMessage: data.opening_message,
       });
       setLoading(false);
     } catch (err) {
@@ -47,7 +49,7 @@ function App() {
     return (
       <>
         {error && (
-          <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm shadow-md z-50">
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-900/50 border border-red-700 text-red-200 px-4 py-2 rounded-lg text-sm shadow-md z-50">
             {error}
           </div>
         )}
@@ -57,13 +59,21 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      {/* Header — dynamic */}
-      <div className="bg-gradient-to-r from-sofia-500 to-sofia-600 text-white px-6 py-4 shadow-md">
+    <div className="flex flex-col h-screen bg-dark-bg relative overflow-hidden">
+      {/* Gradient orbs (background) */}
+      <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-brand-violet rounded-full opacity-10 blur-3xl -z-10" />
+      <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-brand-cyan rounded-full opacity-10 blur-3xl -z-10" />
+
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-brand-violet to-brand-cyan text-white px-6 py-4 shadow-lg z-20">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">{agentMeta.companyName} — {agentMeta.agentName} (SDR IA)</h1>
-            <p className="text-sm opacity-90">Converse com {agentMeta.agentName} e veja seu lead sendo qualificado em tempo real</p>
+            <h1 className="text-xl font-bold">
+              {agentMeta.companyName} — {agentMeta.agentName} (SDR IA)
+            </h1>
+            <p className="text-sm opacity-90">
+              Converse com {agentMeta.agentName} e veja seu lead sendo qualificado em tempo real
+            </p>
           </div>
           <button
             onClick={() => {
@@ -78,24 +88,35 @@ function App() {
         </div>
       </div>
 
-      {/* Main layout */}
-      <div className="flex flex-1 overflow-hidden gap-4 p-4">
-        {/* Chat (left) */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <ChatWindow
-            sessionId={sessionId!}
-            agentName={agentMeta.agentName}
-            companyName={agentMeta.companyName}
-            suggestions={agentMeta.suggestions}
-          />
-        </div>
+      {/* Main layout — device frame effect */}
+      <div className="flex-1 overflow-hidden flex items-center justify-center p-6">
+        <div className="w-full h-full max-w-5xl rounded-2xl border-8 border-gray-300 bg-white shadow-2xl overflow-hidden flex gap-4 p-4" style={{
+          boxShadow: '0 20px 60px rgba(168, 85, 247, 0.15), 0 0 100px rgba(6, 182, 212, 0.1)',
+        }}>
+          {/* Chat (left) */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <ChatWindow
+              sessionId={sessionId!}
+              agentName={agentMeta.agentName}
+              companyName={agentMeta.companyName}
+              suggestions={agentMeta.suggestions}
+            />
+          </div>
 
-        {/* CRM ao vivo (right) */}
-        <CRMView />
+          {/* CRM ao vivo (right) */}
+          <div className="w-80 border-l border-gray-200 pl-4 flex flex-col">
+            <div className="text-xs font-semibold text-gray-700 mb-4 uppercase tracking-wider">
+              📊 CRM ao vivo
+            </div>
+            <div className="flex-1 overflow-auto">
+              <CRMView />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 bg-gray-50 px-6 py-3 text-xs text-gray-600">
+      <div className="border-t border-gray-700 bg-dark-surface/50 px-6 py-3 text-xs text-gray-500 z-10">
         <p>Simulação de atendimento ({agentMeta.niche}). Em produção, este agente opera no WhatsApp oficial via Meta Cloud API.</p>
       </div>
     </div>

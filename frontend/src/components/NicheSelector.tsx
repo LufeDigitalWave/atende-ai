@@ -28,42 +28,57 @@ export default function NicheSelector({ onSelect, loading }: NicheSelectorProps)
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sofia-50 to-white">
-        <div className="text-center">
-          <div className="w-12 h-12 animate-spin mx-auto mb-4 border-4 border-sofia-500 border-t-transparent rounded-full" />
-          <p className="text-lg font-medium text-gray-800">Gerando agente personalizado...</p>
-          <p className="text-sm text-gray-500 mt-1">Isso leva 2-3 segundos</p>
+      <div className="min-h-screen flex items-center justify-center bg-dark-bg relative overflow-hidden">
+        {/* Gradient orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-violet rounded-full opacity-20 blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brand-cyan rounded-full opacity-20 blur-3xl" />
+
+        <div className="text-center relative z-10">
+          <div className="w-16 h-16 mx-auto mb-6 relative">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-brand-violet to-brand-cyan animate-pulse" />
+            <div className="absolute inset-2 rounded-full bg-dark-bg" />
+          </div>
+          <p className="text-xl font-semibold text-white mb-2">
+            Gerando sua agente personalizada
+          </p>
+          <p className="text-sm text-gray-400">
+            Analisando nicho → construindo perfil → preparando base de conhecimento
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sofia-50 to-white p-4">
-      <div className="max-w-2xl w-full">
+    <div className="min-h-screen flex items-center justify-center bg-dark-bg relative overflow-hidden p-4">
+      {/* Gradient orbs for depth */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-violet rounded-full opacity-20 blur-3xl" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brand-cyan rounded-full opacity-20 blur-3xl" />
+
+      <div className="max-w-2xl w-full relative z-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Atende AI — Demo ao Vivo
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-brand-violet_light to-brand-cyan_light bg-clip-text text-transparent mb-4">
+            Atende AI
           </h1>
-          <p className="text-gray-600 text-sm max-w-md mx-auto">
+          <p className="text-gray-300 text-base max-w-md mx-auto">
             Escolha o ramo da sua empresa e veja um agente SDR de IA personalizado
-            qualificando leads em tempo real — com CRM ao vivo.
+            qualificando leads em tempo real.
           </p>
         </div>
 
         {/* Niche grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {NICHES.map((niche) => (
             <button
               key={niche.id}
               onClick={() => onSelect(niche.label)}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 bg-white hover:border-sofia-400 hover:shadow-md transition-all cursor-pointer group"
+              className="flex flex-col items-center gap-3 p-5 rounded-xl bg-dark-surface border border-dark-border hover:border-brand-violet hover:shadow-lg hover:shadow-brand-violet/20 hover:-translate-y-0.5 transition-all cursor-pointer group"
             >
-              <span className="text-2xl group-hover:scale-110 transition-transform">
+              <span className="text-3xl group-hover:scale-110 transition-transform">
                 {niche.emoji}
               </span>
-              <span className="text-xs font-medium text-gray-700 text-center">
+              <span className="text-xs font-medium text-gray-200 text-center">
                 {niche.label}
               </span>
             </button>
@@ -71,20 +86,20 @@ export default function NicheSelector({ onSelect, loading }: NicheSelectorProps)
         </div>
 
         {/* Custom input */}
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-2">Ou digite seu ramo:</p>
+        <div className="text-center mb-8">
+          <p className="text-xs text-gray-500 mb-3">Ou digite seu ramo:</p>
           <form onSubmit={handleCustomSubmit} className="flex gap-2 max-w-sm mx-auto">
             <input
               type="text"
               value={customNiche}
               onChange={(e) => setCustomNiche(e.target.value)}
               placeholder="Ex: consultório odontológico"
-              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-sofia-500"
+              className="flex-1 px-4 py-2.5 text-sm bg-dark-surface border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-violet transition-colors"
             />
             <button
               type="submit"
               disabled={!customNiche.trim()}
-              className="px-4 py-2 text-sm font-medium bg-sofia-500 text-white rounded-lg hover:bg-sofia-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-brand-violet to-brand-cyan text-white rounded-lg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               Testar →
             </button>
@@ -92,9 +107,9 @@ export default function NicheSelector({ onSelect, loading }: NicheSelectorProps)
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-xs text-gray-400">
+        <div className="text-center text-xs text-gray-500">
           <p>A IA gera um agente SDR sob medida pro seu nicho em 2-3 segundos.</p>
-          <p className="mt-1">Empresa e dados são 100% fictícios. A IA é real (OpenAI GPT-4o-mini).</p>
+          <p className="mt-1">Empresa e dados são 100% fictícios. A IA é real.</p>
         </div>
       </div>
     </div>
