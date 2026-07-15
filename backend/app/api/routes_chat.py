@@ -74,9 +74,10 @@ async def create_session(
     # Parse niche
     niche = (body.niche if body else "") or "clinica de estetica"
 
-    # Generate dynamic prompt for the niche
-    from app.services.prompt_factory import generate_niche_prompt
-    niche_prompt = await generate_niche_prompt(niche)
+    # Generate dynamic prompt for the niche (factory v2: data-not-prompt)
+    from app.services.prompt_factory import generate_niche_prompt, sanitize_niche
+    niche = sanitize_niche(niche)
+    cached = await generate_niche_prompt(niche)
 
     # Create session
     session = Session(
@@ -97,16 +98,18 @@ async def create_session(
     # Store niche for this session (in-memory lookup for SSE generator)
     _session_niches[str(session.id)] = niche
 
-    logger.info(f"created session {session.id} niche={niche} agent={niche_prompt.agent_name}")
+    profile = cached.profile
+    logger.info(f"created session {session.id} niche={niche} agent={profile.agent_name}")
 
     return {
         "session_id": str(session.id),
         "created_at": session.created_at.isoformat(),
         "status": session.status.value,
         "niche": niche,
-        "agent_name": niche_prompt.agent_name,
-        "company_name": niche_prompt.company_name,
-        "suggestions": niche_prompt.suggestions,
+        "agent_name": profile.agent_name,
+        "company_name": profile.company_name,
+        "suggestions": profile.suggestions,
+        "opening_message": profile.opening_message,
     }
 
 
@@ -302,17 +305,19 @@ async def send_message(
             yield f"event: error\ndata: {json.dumps({'code': 'no_lead', 'message': 'Lead not found'})}\n\n"
             return
 
-        # Load dynamic prompt from session→niche mapping
+        # Load dynamic prompt from session→niche mapping (factory v2)
         from app.services.prompt_factory import get_cached_prompt
-        session_niche = _session_niches.get(str(session.id), "clinica de estetica")
-        niche_prompt = get_cached_prompt(session_niche)
-        if niche_prompt:
-            system_prompt = niche_prompt.system_prompt
+        session_niche = _session_niches.get(str(session.id), "consultoria empresarial")
+        cached = get_cached_prompt(session_niche)
+        if cached:
+            system_prompt = cached.system_prompt
         else:
-            # Fallback: load static prompt
-            prompt_dir = Path(__file__).parent.parent / "agent" / "prompts"
-            prompt_file = prompt_dir / f"{settings.agent_prompt_version}.md"
-            system_prompt = prompt_file.read_text(encoding="utf-8") if prompt_file.exists() else "You are Sofia."
+            # Fallback: should not happen (cache miss means generate was called on session creation)
+            # but keeping as safety net
+            logger.warning(f"cache miss for niche {session_niche}, regenerating")
+            from app.services.prompt_factory import generate_niche_prompt
+            cached = await generate_niche_prompt(session_niche)
+            system_prompt = cached.system_prompt
 
         # Inject brevity + engagement instruction (WhatsApp style)
         system_prompt += """\n\n## REGRA CRÍTICA DE FORMATO:
