@@ -105,12 +105,32 @@ nicho no Brasil.
 - lead_scoring_rules é opcional; inclua apenas se quiser customizar pontos.
 - Todo o conteúdo deve estar em português do Brasil.
 
+## Regra especial para nichos de ALIMENTAÇÃO
+
+Para restaurante, pizzaria, lanchonete, cafeteria, hamburgueria, padaria,
+casa de açaí ou qualquer nicho de food service:
+
+- O campo "services" deve conter PRATOS ou ITENS DO CARDÁPIO (não categorias genéricas).
+- Gere entre 5 a 8 items com nomes de pratos reais e fictícios:
+  - 2-3 pratos principais com preço
+  - 1-2 entradas/porções com preço
+  - 1-2 bebidas ou sobremesas com preço
+- Cada item deve ter: name (nome do prato), price_cash ("R$ XX,XX"),
+  duration_or_scope (descrição curta dos ingredientes ou acompanhamentos).
+- price_installments: null (restaurante não parcela).
+- Exemplo:
+  {"name": "Filé ao molho madeira", "price_cash": "R$ 59,90",
+   "price_installments": null, "duration_or_scope": "Arroz, fritas, salada", "highlight": true}
+- O agente PRECISA desses dados pra responder "o que tem no cardápio?" — a
+  pergunta mais comum em restaurante.
+
 ## Boas práticas por business_mode
 
 reservation_based (restaurante, hotel):
 - qualification_fields: customer_name, party_size, reservation_date, reservation_time
 - NÃO incluir budget_range em qualification_fields
 - prohibited_behaviors: "Não perguntar faixa de investimento para almoço/jantar/reserva"
+- services DEVE conter pratos do cardápio (ver regra especial acima)
 
 appointment_based (clínica, salão):
 - qualification_fields: customer_name, need, urgency, availability

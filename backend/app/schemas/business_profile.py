@@ -87,8 +87,8 @@ class BusinessProfile(BaseModel):
         description="One-liner positioning"
     )
     services: list[ServiceItem] = Field(
-        ..., min_length=3, max_length=5,
-        description="3 to 5 services with realistic prices"
+        ..., min_length=3, max_length=10,
+        description="3 to 10 services/products/menu items with realistic prices"
     )
     qualification_extra_question: str = Field(
         default="", max_length=200,
