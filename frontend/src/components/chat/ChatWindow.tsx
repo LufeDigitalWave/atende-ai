@@ -222,14 +222,49 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
         )}
       </div>
 
+      {/* Completion panel — shown after handoff or qualification */}
+      {(useSessionStore.getState().lead?.state === 'handoff' || useSessionStore.getState().lead?.state === 'qualificado') && (
+        <div className="border-t border-gray-200 bg-gradient-to-r from-brand-violet/5 to-brand-cyan/5 p-4">
+          <div className="text-center">
+            <p className="text-sm font-semibold text-gray-800 mb-1">
+              ✅ Lead qualificado com sucesso
+            </p>
+            <p className="text-xs text-gray-600 mb-3">
+              Viu como a IA qualifica em tempo real? Esse mesmo motor funciona no WhatsApp da sua empresa.
+            </p>
+            <div className="flex gap-2 justify-center flex-wrap">
+              <a
+                href="https://wa.me/5511999999999?text=Vi%20a%20demo%20do%20Atende%20AI%20e%20quero%20saber%20mais"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 text-xs font-medium bg-gradient-to-r from-brand-violet to-brand-cyan text-white rounded-lg hover:opacity-90 transition-all"
+              >
+                Quero isso na minha empresa →
+              </a>
+              <button
+                onClick={() => {
+                  useSessionStore.getState().reset();
+                  window.location.reload();
+                }}
+                className="px-4 py-2 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Testar outro nicho
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <ChatInput
         onSend={handleSend}
-        disabled={inputDisabled || isCapped}
+        disabled={inputDisabled || isCapped || useSessionStore.getState().lead?.state === 'handoff'}
         placeholder={
           isCapped
             ? 'Sessão encerrada'
-            : 'Digite sua mensagem...'
+            : useSessionStore.getState().lead?.state === 'handoff'
+              ? 'Conversa finalizada — lead encaminhado'
+              : 'Digite sua mensagem...'
         }
       />
     </div>
