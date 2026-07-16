@@ -39,6 +39,31 @@ settings = get_settings()
 _session_niches: dict[str, str] = {}
 
 
+def _build_cumulative_extraction(lead, current_extraction, niche_profile):
+    """Build a cumulative ExtractedLeadData combining existing lead state + current turn.
+
+    This ensures scoring reflects ALL data collected so far, not just this turn.
+    """
+    from app.schemas.lead_extraction import ExtractedLeadData, ExtractedField
+
+    # Start with fields from the current extraction
+    fields_by_key = {ef.key: ef for ef in current_extraction.extracted_fields if ef.value is not None}
+
+    # Add previously known fields from the lead (that weren't in this turn)
+    if lead.name and "customer_name" not in fields_by_key and "name" not in fields_by_key:
+        fields_by_key["customer_name"] = ExtractedField(key="customer_name", value=lead.name, confidence=1.0)
+    if lead.service_interest and "service_interest" not in fields_by_key and "service" not in fields_by_key:
+        fields_by_key["service_interest"] = ExtractedField(key="service_interest", value=lead.service_interest, confidence=1.0)
+
+    return ExtractedLeadData(
+        detected_intent=current_extraction.detected_intent,
+        intent_confidence=current_extraction.intent_confidence,
+        extracted_fields=list(fields_by_key.values()),
+        should_handoff=current_extraction.should_handoff,
+        handoff_reason=current_extraction.handoff_reason,
+    )
+
+
 def _build_lead_summary(lead) -> str:
     """Build a short text summary of the lead's current state for the extractor."""
     parts = []
@@ -393,16 +418,24 @@ async def send_message(
             lead.complaint = legacy_fields["complaint"]
             changed = True
 
-        # Also emit ALL extracted fields (not just legacy ones)
+        # Emit only NON-NULL fields that represent new information
         all_fields = {ef.key: ef.value for ef in extraction.extracted_fields if ef.value is not None}
-        if legacy_fields:
-            all_fields.update(legacy_fields)
+        # Merge legacy aliases (only non-null)
+        for k, v in legacy_fields.items():
+            if v is not None:
+                all_fields[k] = v
         if all_fields:
             changed = True
             yield f"event: lead_update\ndata: {json.dumps({'fields': all_fields})}\n\n"
 
-        # Score (v3 — contextual by intent)
-        new_score, breakdown = compute_score_v3(extraction, niche_profile)
+        # Score (v3 — contextual by intent, CUMULATIVE across turns)
+        # Build cumulative extraction: combine lead's existing extracted fields with this turn's new ones
+        from app.schemas.lead_extraction import ExtractedLeadData, ExtractedField
+
+        # Get previously extracted fields from lead.extracted_data (JSONB)
+        # For now, reconstruct from legacy columns + score_breakdown
+        cumulative_extraction = _build_cumulative_extraction(lead, extraction, niche_profile)
+        new_score, breakdown = compute_score_v3(cumulative_extraction, niche_profile)
         if new_score != lead.score:
             lead.score = new_score
             lead.score_breakdown = breakdown
