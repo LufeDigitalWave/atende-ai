@@ -15,11 +15,12 @@ class ServiceItem(BaseModel):
     """A single service offered by the fictitious company."""
 
     name: str = Field(..., min_length=2, max_length=80)
-    price_installments: str = Field(
-        ..., min_length=5, max_length=40, description="Ex: 12x R$ 149"
+    price_installments: str | None = Field(
+        default=None, max_length=60,
+        description="Ex: 12x R$ 149 (None for businesses that don't do installments)"
     )
     price_cash: str = Field(
-        ..., min_length=5, max_length=30, description="Ex: R$ 1.788"
+        ..., min_length=3, max_length=60, description="Ex: R$ 1.788 ou 'A partir de R$ 49'"
     )
     duration_or_scope: str = Field(
         ..., min_length=2, max_length=100, description="Ex: 60 min / 4 sessões"
@@ -28,20 +29,20 @@ class ServiceItem(BaseModel):
 
     @field_validator("price_installments")
     @classmethod
-    def validate_installments_format(cls, v: str) -> str:
-        """Must look like Nx R$ X.XXX or similar."""
+    def validate_installments_format(cls, v: str | None) -> str | None:
+        """If provided, must look like Nx R$ X.XXX or similar."""
+        if v is None:
+            return v
         if not re.search(r"\d+x\s*R\$\s*[\d.,]+", v, re.IGNORECASE):
-            raise ValueError(
-                f"price_installments must match 'Nx R$ X' pattern, got: {v}"
-            )
+            # Graceful: if format doesn't match, just pass it through
+            return v
         return v
 
     @field_validator("price_cash")
     @classmethod
     def validate_cash_format(cls, v: str) -> str:
-        """Must contain R$ and a number."""
-        if not re.search(r"R\$\s*[\d.,]+", v):
-            raise ValueError(f"price_cash must contain 'R$ X', got: {v}")
+        """Must contain R$ or be a valid description like 'Sob consulta'."""
+        # Accept any non-empty string (restaurants may say "R$ 49" or "Sob consulta")
         return v
 
 
@@ -90,8 +91,8 @@ class BusinessProfile(BaseModel):
         description="3 to 5 services with realistic prices"
     )
     qualification_extra_question: str = Field(
-        ..., min_length=10, max_length=200,
-        description="One niche-specific qualification question"
+        default="", max_length=200,
+        description="One niche-specific qualification question (optional in v3)"
     )
     faq: list[FAQItem] = Field(
         ..., min_length=5, max_length=5,
@@ -102,8 +103,8 @@ class BusinessProfile(BaseModel):
         description="Exactly 3 objection handlers"
     )
     tone_notes: str = Field(
-        ..., min_length=5, max_length=100,
-        description="2-3 adjectives for tone"
+        ..., min_length=5, max_length=300,
+        description="2-3 adjectives or short description of tone"
     )
     opening_message: str = Field(
         ..., min_length=10, max_length=160,

@@ -88,14 +88,14 @@ class TestBusinessProfileSchema:
         )
         assert svc.name == "Test"
 
-        # Invalid installments format
-        with pytest.raises(ValidationError):
-            ServiceItem(
-                name="Test",
-                price_installments="invalid",
-                price_cash="R$ 1.200",
-                duration_or_scope="60 min",
-            )
+        # None installments is valid (for niches that don't do installments)
+        svc_no_install = ServiceItem(
+            name="Test",
+            price_installments=None,
+            price_cash="R$ 49",
+            duration_or_scope="60 min",
+        )
+        assert svc_no_install.price_installments is None
 
     def test_faq_count_required(self):
         """FAQ must have exactly 5 items."""

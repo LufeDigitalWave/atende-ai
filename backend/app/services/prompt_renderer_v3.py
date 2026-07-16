@@ -28,10 +28,11 @@ def _render_services(business) -> str:
     lines = []
     for s in business.services:
         h = " ⭐" if s.highlight else ""
-        lines.append(
-            f"- **{s.name}**{h}: {s.price_installments} ou {s.price_cash} à vista "
-            f"({s.duration_or_scope})"
-        )
+        if s.price_installments:
+            price = f"{s.price_installments} ou {s.price_cash} à vista"
+        else:
+            price = s.price_cash
+        lines.append(f"- **{s.name}**{h}: {price} ({s.duration_or_scope})")
     return "\n".join(lines)
 
 
