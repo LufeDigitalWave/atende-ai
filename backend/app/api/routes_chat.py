@@ -39,6 +39,22 @@ settings = get_settings()
 _session_niches: dict[str, str] = {}
 
 
+def _build_lead_summary(lead) -> str:
+    """Build a short text summary of the lead's current state for the extractor."""
+    parts = []
+    if lead.name:
+        parts.append(f"nome={lead.name}")
+    if lead.service_interest:
+        parts.append(f"servico={lead.service_interest}")
+    if lead.complaint:
+        parts.append(f"queixa={lead.complaint}")
+    if lead.budget_range and lead.budget_range.value != "nao_informado":
+        parts.append(f"orcamento={lead.budget_range.value}")
+    if lead.urgency and lead.urgency.value != "nao_informada":
+        parts.append(f"urgencia={lead.urgency.value}")
+    return ", ".join(parts) if parts else "(lead vazio)"
+
+
 class SessionCreateRequest(BaseSchema):
     niche: str = ""
 
@@ -74,10 +90,10 @@ async def create_session(
     # Parse niche
     niche = (body.niche if body else "") or "clinica de estetica"
 
-    # Generate dynamic prompt for the niche (factory v2: data-not-prompt)
-    from app.services.prompt_factory import generate_niche_prompt, sanitize_niche
+    # Generate dynamic prompt for the niche (factory v3: BusinessProfile + ConversationProfile)
+    from app.services.prompt_factory_v3 import generate_niche_profile, sanitize_niche
     niche = sanitize_niche(niche)
-    cached = await generate_niche_prompt(niche)
+    niche_profile = await generate_niche_profile(niche)
 
     # Create session
     session = Session(
@@ -98,18 +114,18 @@ async def create_session(
     # Store niche for this session (in-memory lookup for SSE generator)
     _session_niches[str(session.id)] = niche
 
-    profile = cached.profile
-    logger.info(f"created session {session.id} niche={niche} agent={profile.agent_name}")
+    bp = niche_profile.business
+    logger.info(f"created session {session.id} niche={niche} agent={bp.agent_name}")
 
     return {
         "session_id": str(session.id),
         "created_at": session.created_at.isoformat(),
         "status": session.status.value,
         "niche": niche,
-        "agent_name": profile.agent_name,
-        "company_name": profile.company_name,
-        "suggestions": profile.suggestions,
-        "opening_message": profile.opening_message,
+        "agent_name": bp.agent_name,
+        "company_name": bp.company_name,
+        "suggestions": bp.suggestions,
+        "opening_message": bp.opening_message,
     }
 
 
@@ -286,11 +302,13 @@ async def send_message(
 
     # Run agent loop and stream response as SSE
     from fastapi.responses import StreamingResponse
-    from app.agent.extractor import extract_fields, apply_extraction
-    from app.agent.scoring import compute_score
     from app.agent.states import auto_transition
-    from app.models import Lead, LeadState, LeadEvent, LeadEventType
+    from app.models import Lead, LeadState, LeadEvent, LeadEventType, BudgetRange, Urgency
     from app.services.llm import get_llm_provider
+    from app.services.lead_extractor import extract_lead_data
+    from app.services.lead_scoring_v3 import compute_score_v3
+    from app.services.prompt_factory_v3 import get_cached_profile, generate_niche_profile
+    from app.services.prompt_renderer_v3 import render_prompt
     from pathlib import Path
     import json
     import time
@@ -305,28 +323,15 @@ async def send_message(
             yield f"event: error\ndata: {json.dumps({'code': 'no_lead', 'message': 'Lead not found'})}\n\n"
             return
 
-        # Load dynamic prompt from session→niche mapping (factory v2)
-        from app.services.prompt_factory import get_cached_prompt
+        # Load dynamic prompt from session→niche mapping (factory v3)
         session_niche = _session_niches.get(str(session.id), "consultoria empresarial")
-        cached = get_cached_prompt(session_niche)
-        if cached:
-            system_prompt = cached.system_prompt
-        else:
-            # Fallback: should not happen (cache miss means generate was called on session creation)
-            # but keeping as safety net
-            logger.warning(f"cache miss for niche {session_niche}, regenerating")
-            from app.services.prompt_factory import generate_niche_prompt
-            cached = await generate_niche_prompt(session_niche)
-            system_prompt = cached.system_prompt
+        niche_profile = get_cached_profile(session_niche)
+        if not niche_profile:
+            logger.warning(f"v3 cache miss for niche {session_niche}, regenerating")
+            niche_profile = await generate_niche_profile(session_niche)
 
-        # Inject brevity + engagement instruction (WhatsApp style)
-        system_prompt += """\n\n## REGRA CRÍTICA DE FORMATO:
-- Responda com no MÁXIMO 3 frases curtas (≤ 200 chars total). Estilo WhatsApp.
-- NUNCA use listas numeradas, NUNCA use markdown/negrito.
-- SEMPRE termine com uma pergunta que avança a qualificação (puxa pro próximo campo).
-- Na primeira mensagem: cumprimente brevemente, diga quem é (nome + empresa) e pergunte o que o cliente procura.
-- Exemplo bom: "Oi! Sou a Mel da PetVida 🐾 O que posso fazer pelo seu pet hoje?"
-- Exemplo ruim: "Olá! Como posso ajudar você hoje?" (genérico demais, sem contexto)"""
+        # Render system prompt from NicheProfile (template v3)
+        system_prompt = render_prompt(niche_profile)
 
         # Build history (last 12 messages)
         history_stmt = (
@@ -369,27 +374,50 @@ async def send_message(
         db.add(agent_msg)
         await db.commit()
 
-        # Extract fields
-        extraction = extract_fields(body.content, agent_response, lead)
-        changed = apply_extraction(lead, extraction)
+        # Extract fields via LLM (v3 — dynamic per niche)
+        existing_summary = _build_lead_summary(lead)
+        extraction = await extract_lead_data(
+            body.content, agent_response, niche_profile, existing_summary
+        )
 
-        if changed:
-            fields = {k: v for k, v in extraction.to_dict().items() if v is not None}
-            yield f"event: lead_update\ndata: {json.dumps({'fields': fields})}\n\n"
+        # Apply extraction to legacy lead columns (backward compat with frontend SSE)
+        legacy_fields = extraction.to_legacy_dict()
+        changed = False
+        if legacy_fields.get("name") and not lead.name:
+            lead.name = legacy_fields["name"]
+            changed = True
+        if legacy_fields.get("service_interest") and not lead.service_interest:
+            lead.service_interest = legacy_fields["service_interest"]
+            changed = True
+        if legacy_fields.get("complaint") and not lead.complaint:
+            lead.complaint = legacy_fields["complaint"]
+            changed = True
 
-        # Score
-        new_score, breakdown = compute_score(lead)
+        # Also emit ALL extracted fields (not just legacy ones)
+        all_fields = {ef.key: ef.value for ef in extraction.extracted_fields if ef.value is not None}
+        if legacy_fields:
+            all_fields.update(legacy_fields)
+        if all_fields:
+            changed = True
+            yield f"event: lead_update\ndata: {json.dumps({'fields': all_fields})}\n\n"
+
+        # Score (v3 — contextual by intent)
+        new_score, breakdown = compute_score_v3(extraction, niche_profile)
         if new_score != lead.score:
             lead.score = new_score
             lead.score_breakdown = breakdown
             yield f"event: score_update\ndata: {json.dumps({'total': new_score, 'breakdown': breakdown})}\n\n"
 
-        # State transition
+        # State transition (keep legacy FSM for now, enhanced with handoff detection)
         old_state = lead.state
-        trans = auto_transition(lead)
-        if trans and trans.allowed:
-            lead.state = trans.to_state
-            yield f"event: state_update\ndata: {json.dumps({'from': old_state.value, 'to': trans.to_state.value})}\n\n"
+        if extraction.should_handoff:
+            lead.state = LeadState.handoff
+            yield f"event: state_update\ndata: {json.dumps({'from': old_state.value, 'to': 'handoff'})}\n\n"
+        else:
+            trans = auto_transition(lead)
+            if trans and trans.allowed:
+                lead.state = trans.to_state
+                yield f"event: state_update\ndata: {json.dumps({'from': old_state.value, 'to': trans.to_state.value})}\n\n"
 
         await db.commit()
 
