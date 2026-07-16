@@ -405,6 +405,16 @@ async def send_message(
             body.content, agent_response, niche_profile, existing_summary
         )
 
+        # Also run heuristic fallback and merge any fields it found that LLM missed
+        from app.services.lead_extractor import _heuristic_fallback
+        heuristic_result = _heuristic_fallback(body.content, agent_response, niche_profile)
+        for hf in heuristic_result.extracted_fields:
+            if hf.value is not None:
+                # Only add if LLM didn't already find this key
+                existing_keys = {ef.key for ef in extraction.extracted_fields if ef.value is not None}
+                if hf.key not in existing_keys:
+                    extraction.extracted_fields.append(hf)
+
         # Apply extraction to legacy lead columns (backward compat with frontend SSE)
         legacy_fields = extraction.to_legacy_dict()
         changed = False
