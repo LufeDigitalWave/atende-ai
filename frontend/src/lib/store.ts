@@ -8,6 +8,12 @@ export interface Message {
   isStreaming?: boolean;
 }
 
+export interface CRMField {
+  key: string;
+  label: string;
+  priority: string;
+}
+
 export interface LeadProfile {
   name: string | null;
   serviceInterest: string | null;
@@ -18,6 +24,8 @@ export interface LeadProfile {
   state: string;
   scoreBreakdown: Record<string, number>;
   scheduledSlot: string | null;
+  // v3: dynamic fields per niche
+  dynamicFields: Record<string, string | number | boolean | null>;
 }
 
 export interface LeadEvent {
@@ -67,6 +75,7 @@ const initialLead: LeadProfile = {
   state: 'novo',
   scoreBreakdown: {},
   scheduledSlot: null,
+  dynamicFields: {},
 };
 
 export const useSessionStore = create<SessionState>((set) => ({

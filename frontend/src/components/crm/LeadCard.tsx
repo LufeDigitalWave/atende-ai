@@ -1,12 +1,27 @@
-import { useSessionStore, type LeadProfile } from '../../lib/store';
+import { useSessionStore } from '../../lib/store';
+
+interface CRMField {
+  key: string;
+  label: string;
+  priority: string;
+}
+
+interface LeadCardProps {
+  crmFields?: CRMField[];
+}
 
 /**
- * Lead card with fields, highlighting new data.
+ * Lead card with DYNAMIC fields per niche.
+ * v3: renders fields from ConversationProfile.qualification_fields.
+ * Falls back to legacy 5 fields if no crmFields provided.
  */
-export default function LeadCard() {
+export default function LeadCard({ crmFields = [] }: LeadCardProps) {
   const lead = useSessionStore((s) => s.lead);
 
   if (!lead) return null;
+
+  // Use dynamic fields if available, otherwise fallback to legacy
+  const hasDynamicFields = crmFields.length > 0;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
@@ -18,11 +33,29 @@ export default function LeadCard() {
       </h3>
 
       <div className="space-y-2">
-        <FieldRow label="Nome" value={lead.name} />
-        <FieldRow label="Serviço" value={lead.serviceInterest} />
-        <FieldRow label="Queixa" value={lead.complaint} />
-        <FieldRow label="Orçamento" value={formatBudget(lead.budgetRange)} />
-        <FieldRow label="Urgência" value={formatUrgency(lead.urgency)} />
+        {hasDynamicFields ? (
+          // v3: Dynamic fields from ConversationProfile
+          crmFields.map((field) => {
+            const value = getDynamicFieldValue(field.key, lead.dynamicFields);
+            return (
+              <FieldRow
+                key={field.key}
+                label={field.label}
+                value={value}
+                priority={field.priority}
+              />
+            );
+          })
+        ) : (
+          // Legacy fallback: 5 universal fields
+          <>
+            <FieldRow label="Nome" value={lead.name} />
+            <FieldRow label="Serviço" value={lead.serviceInterest} />
+            <FieldRow label="Queixa" value={lead.complaint} />
+            <FieldRow label="Orçamento" value={formatBudget(lead.budgetRange)} />
+            <FieldRow label="Urgência" value={formatUrgency(lead.urgency)} />
+          </>
+        )}
         {lead.scheduledSlot && (
           <FieldRow label="Agendamento" value={lead.scheduledSlot} />
         )}
@@ -31,15 +64,29 @@ export default function LeadCard() {
   );
 }
 
-function FieldRow({ label, value }: { label: string; value: string | null }) {
-  const filled = value && value !== 'nao_informado' && value !== 'nao_informada';
+function getDynamicFieldValue(
+  key: string,
+  dynamicFields: Record<string, string | number | boolean | null>
+): string | null {
+  const val = dynamicFields[key];
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'boolean') return val ? 'Sim' : 'Não';
+  return String(val);
+}
+
+function FieldRow({ label, value, priority }: { label: string; value: string | null; priority?: string }) {
+  const filled = value && value !== 'nao_informado' && value !== 'nao_informada' && value.trim() !== '';
+  const isHigh = priority === 'high';
+
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-gray-500">{label}</span>
+      <span className={`text-xs ${isHigh ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
+        {label}
+      </span>
       <span
-        className={`text-xs font-medium transition-all duration-300 ${
+        className={`text-xs font-mono transition-all duration-300 ${
           filled
-            ? 'text-gray-900 bg-sofia-50 px-2 py-0.5 rounded animate-pulse'
+            ? 'text-gray-900 bg-gradient-to-r from-brand-violet/10 to-brand-cyan/10 px-2 py-0.5 rounded'
             : 'text-gray-300 italic'
         }`}
       >

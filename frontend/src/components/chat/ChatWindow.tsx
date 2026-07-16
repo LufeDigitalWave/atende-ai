@@ -103,6 +103,13 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
           if (fields.complaint) mapped.complaint = fields.complaint;
           if (fields.budget_range) mapped.budgetRange = fields.budget_range;
           if (fields.urgency) mapped.urgency = fields.urgency;
+          // v3: store ALL fields as dynamic (for niche-specific CRM)
+          const currentDynamic = useSessionStore.getState().lead?.dynamicFields || {};
+          const newDynamic = { ...currentDynamic };
+          for (const [k, v] of Object.entries(fields)) {
+            if (v != null) newDynamic[k] = v;
+          }
+          mapped.dynamicFields = newDynamic;
           updateLead(mapped);
         },
         // onScoreUpdate

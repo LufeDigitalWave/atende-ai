@@ -140,7 +140,14 @@ async def create_session(
     _session_niches[str(session.id)] = niche
 
     bp = niche_profile.business
+    cp = niche_profile.conversation
     logger.info(f"created session {session.id} niche={niche} agent={bp.agent_name}")
+
+    # Send qualification_fields to frontend (so CRM shows dynamic fields per niche)
+    crm_fields = [
+        {"key": qf.key, "label": qf.label, "priority": qf.priority}
+        for qf in cp.qualification_fields
+    ]
 
     return {
         "session_id": str(session.id),
@@ -151,6 +158,8 @@ async def create_session(
         "company_name": bp.company_name,
         "suggestions": bp.suggestions,
         "opening_message": bp.opening_message,
+        "crm_fields": crm_fields,
+        "business_mode": cp.business_mode,
     }
 
 

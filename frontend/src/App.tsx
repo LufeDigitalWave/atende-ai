@@ -5,12 +5,20 @@ import CRMView from './components/crm/CRMView';
 import NicheSelector from './components/NicheSelector';
 import { createSession } from './lib/api';
 
+interface CRMField {
+  key: string;
+  label: string;
+  priority: string;
+}
+
 interface AgentMeta {
   agentName: string;
   companyName: string;
   niche: string;
   suggestions: string[];
   openingMessage?: string;
+  crmFields: CRMField[];
+  businessMode: string;
 }
 
 function App() {
@@ -36,6 +44,8 @@ function App() {
           'Vocês atendem hoje?',
         ],
         openingMessage: data.opening_message,
+        crmFields: data.crm_fields || [],
+        businessMode: data.business_mode || 'mixed',
       });
       setLoading(false);
     } catch (err) {
@@ -109,7 +119,7 @@ function App() {
               📊 CRM ao vivo
             </div>
             <div className="flex-1 overflow-auto">
-              <CRMView />
+              <CRMView crmFields={agentMeta.crmFields} />
             </div>
           </div>
         </div>
