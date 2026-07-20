@@ -28,7 +28,7 @@ from app.schemas.chat import (
     AdminCostsBudget,
     AdminAgentInfo,
 )
-from app.services.budget import get_daily_usage
+from app.services.budget import get_daily_usage, get_daily_usage_detailed
 
 logger = structlog.get_logger("routes_admin")
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -211,27 +211,38 @@ async def get_costs(
     """
     Get cost breakdown and budget status.
     """
-    # Today's usage
-    total_tokens, total_cost = await get_daily_usage(db)
-    cost_brl = float(total_cost) * 5  # 1 USD = 5 BRL
+    # Today's detailed usage
+    usage = await get_daily_usage_detailed(db)
+    cost_brl = usage["cost_usd"] * 5  # 1 USD ≈ 5 BRL
 
     today = AdminCostsToday(
-        calls=0,  # TODO: count from usage_log
-        input_tokens=0,  # TODO
-        output_tokens=0,  # TODO
-        cached_tokens=0,  # TODO
-        cost_usd=float(total_cost),
+        calls=usage["calls"],
+        input_tokens=usage["input_tokens"],
+        output_tokens=usage["output_tokens"],
+        cached_tokens=usage["cached_tokens"],
+        cost_usd=usage["cost_usd"],
         cost_brl=cost_brl,
     )
 
     # History (last N days)
-    history = []  # TODO: aggregate by date
+    from datetime import date as date_type, timedelta as td
+    history = []
+    for i in range(1, days + 1):
+        d = date_type.today() - td(days=i)
+        day_usage = await get_daily_usage_detailed(db, d)
+        if day_usage["calls"] > 0:
+            history.append({
+                "date": d.isoformat(),
+                "calls": day_usage["calls"],
+                "cost_brl": day_usage["cost_usd"] * 5,
+            })
 
     # Budget
+    total_tokens = usage["input_tokens"] + usage["output_tokens"]
     budget = AdminCostsBudget(
         daily_tokens=settings.daily_token_budget,
         used_today=total_tokens,
-        percent_used=round(100 * total_tokens / settings.daily_token_budget, 2),
+        percent_used=round(100 * total_tokens / max(settings.daily_token_budget, 1), 2),
     )
 
     return AdminCostsResponse(

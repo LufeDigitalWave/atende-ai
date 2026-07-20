@@ -52,6 +52,19 @@ class Settings(BaseSettings):
     max_input_chars: int = 500
     session_ttl_hours: int = 24
 
+    # Budget alerting
+    budget_alert_enabled: bool = False
+    budget_alert_thresholds: str = "50,80,100"  # comma-separated percentages
+    budget_alert_webhook_url: str | None = None
+    budget_alert_telegram_token: str | None = None
+    budget_alert_telegram_chat_id: str | None = None
+    budget_alert_cooldown_hours: int = 6
+
+    @property
+    def budget_alert_thresholds_list(self) -> list[int]:
+        """Parse comma-separated alert thresholds."""
+        return [int(t.strip()) for t in self.budget_alert_thresholds.split(",") if t.strip()]
+
     # Admin
     admin_username: str = "admin"
     admin_password: str = "admin"

@@ -115,6 +115,38 @@ async def get_daily_usage(
     return total_tokens, total_cost
 
 
+async def get_daily_usage_detailed(
+    session: AsyncSession, target_date: date | None = None
+) -> dict:
+    """Get detailed aggregated usage for a single day (for admin dashboard)."""
+    if target_date is None:
+        target_date = date.today()
+
+    start = datetime.combine(target_date, datetime.min.time(), tzinfo=timezone.utc)
+    end = datetime.combine(
+        target_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc
+    )
+
+    stmt = select(
+        func.count().label("calls"),
+        func.sum(UsageLog.input_tokens).label("input_tokens"),
+        func.sum(UsageLog.output_tokens).label("output_tokens"),
+        func.sum(UsageLog.cached_tokens).label("cached_tokens"),
+        func.sum(UsageLog.cost_usd).label("cost_usd"),
+    ).where(and_(UsageLog.created_at >= start, UsageLog.created_at < end))
+
+    result = await session.execute(stmt)
+    row = result.one()
+
+    return {
+        "calls": row.calls or 0,
+        "input_tokens": row.input_tokens or 0,
+        "output_tokens": row.output_tokens or 0,
+        "cached_tokens": row.cached_tokens or 0,
+        "cost_usd": float(row.cost_usd or 0),
+    }
+
+
 async def check_budget(
     session: AsyncSession, projected_tokens: int = 0
 ) -> tuple[bool, int, int]:

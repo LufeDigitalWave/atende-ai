@@ -28,7 +28,8 @@ from app.schemas.chat import (
     LeadOut,
 )
 from app.schemas.common import BaseSchema
-from app.services.budget import check_budget
+from app.services.budget import check_budget, log_usage
+from app.services.alerting import check_budget_and_alert
 from app.services.rate_limit import get_rate_limiter
 
 logger = structlog.get_logger("routes_chat")
@@ -397,6 +398,27 @@ async def send_message(
             logger.error(f"LLM error: {e}")
             yield f"event: error\ndata: {json.dumps({'code': 'llm_error', 'message': str(e)})}\n\n"
             return
+
+        # Log token usage (best-effort — don't break chat if logging fails)
+        try:
+            await log_usage(
+                db,
+                session_id=str(session.id),
+                call_type="chat",
+                model=settings.agent_model,
+                input_tokens=inp_tok or 0,
+                output_tokens=out_tok or 0,
+                cached_tokens=cached_tok or 0,
+            )
+        except Exception as e:
+            logger.warning(f"log_usage failed (chat): {e}")
+
+        # Check budget thresholds and alert if needed (best-effort)
+        try:
+            allowed, used, remaining = await check_budget(db)
+            await check_budget_and_alert(used, settings.daily_token_budget)
+        except Exception as e:
+            logger.warning(f"budget alert check failed: {e}")
 
         # Save agent message
         agent_msg = Message(

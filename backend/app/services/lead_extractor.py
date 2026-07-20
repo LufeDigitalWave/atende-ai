@@ -202,6 +202,26 @@ async def _llm_extract(
         max_tokens=500,
     )
 
+    # Log extraction token usage (best-effort)
+    try:
+        from app.services.budget import log_usage
+        from app.core.database import get_session_factory
+
+        usage = response.usage
+        if usage:
+            async with get_session_factory()() as db_session:
+                await log_usage(
+                    db_session,
+                    session_id=None,  # extraction is not tied to a specific session
+                    call_type="extraction",
+                    model=factory_model,
+                    input_tokens=usage.prompt_tokens or 0,
+                    output_tokens=usage.completion_tokens or 0,
+                    cached_tokens=0,
+                )
+    except Exception as e:
+        logger.warning(f"log_usage failed (extraction): {e}")
+
     message = response.choices[0].message
     if not message.tool_calls:
         # No tool call — treat as empty extraction
