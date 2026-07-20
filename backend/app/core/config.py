@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     max_input_chars: int = 500
     session_ttl_hours: int = 24
 
+    # Kill switch (operational control without restart)
+    kill_switch_chat: bool = True       # False = chat disabled, returns 503
+    kill_switch_handoff: bool = True    # False = handoff suppressed (lead stays in qualificado)
+
     # Budget alerting
     budget_alert_enabled: bool = False
     budget_alert_thresholds: str = "50,80,100"  # comma-separated percentages

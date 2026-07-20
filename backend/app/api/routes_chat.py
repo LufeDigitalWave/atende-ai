@@ -161,6 +161,7 @@ async def create_session(
         "opening_message": bp.opening_message,
         "crm_fields": crm_fields,
         "business_mode": cp.business_mode,
+        "contact_url": settings.contact_url,
     }
 
 
@@ -382,6 +383,12 @@ async def send_message(
             for m in history_msgs
         ]
 
+        # Kill switch check — before LLM call
+        from app.services.killswitch import is_enabled
+        if not is_enabled("chat"):
+            yield f"event: error\ndata: {json.dumps({'code': 'service_paused', 'message': 'Chat temporariamente desativado pelo administrador'})}\n\n"
+            return
+
         # Typing indicator
         yield f"event: typing\ndata: {json.dumps({'active': True})}\n\n"
 
@@ -484,7 +491,7 @@ async def send_message(
 
         # State transition (keep legacy FSM for now, enhanced with handoff detection)
         old_state = lead.state
-        if extraction.should_handoff:
+        if extraction.should_handoff and is_enabled("handoff"):
             lead.state = LeadState.handoff
             yield f"event: state_update\ndata: {json.dumps({'from': old_state.value, 'to': 'handoff'})}\n\n"
         else:
