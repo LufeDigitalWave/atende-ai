@@ -40,6 +40,10 @@ EXTRACTION_TOOL = {
         "parameters": {
             "type": "object",
             "properties": {
+                "reasoning": {
+                    "type": "string",
+                    "description": "Brief chain-of-thought (max 200 chars): what intent does the visitor have? Which fields are explicitly stated vs implied? This helps calibrate confidence.",
+                },
                 "detected_intent": {
                     "type": "string",
                     "description": "Which intent from the conversation profile matches (e.g., 'reserva', 'avaliacao', 'cardapio')",
@@ -134,6 +138,8 @@ Acione handoff quando QUALQUER destas condições for verdadeira:
 {existing_lead_summary or '(lead vazio)'}
 
 # Instruções estritas
+- PRIMEIRO preencha o campo "reasoning" com um raciocínio breve (max 200 chars):
+  pense: qual é a intenção do visitante? Quais campos estão explícitos vs implícitos?
 - Extraia APENAS dados presentes na mensagem do visitante ou resposta do agente
 - Se um campo não foi mencionado, NÃO invente valor (retorne value=null)
 - confidence: use 0.9+ se explícito, 0.6-0.8 se implícito, <0.5 se incerto

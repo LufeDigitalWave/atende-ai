@@ -148,3 +148,63 @@ transactional (e-commerce, delivery):
 
 mixed (academia, loja física):
 - mistura regras; ser proativo nas ofertas
+
+## Exemplos (few-shot)
+
+### Exemplo 1: Nicho "restaurante japonês"
+
+Input: restaurante japonês
+Output esperado (resumo — gere o JSON completo):
+```json
+{
+  "agent_name": "Yuki",
+  "company_name": "Sushi Kento",
+  "city": "Campinas",
+  "tagline": "Sabor japonês autêntico no coração de Campinas",
+  "services": [
+    {"name": "Combo Especial Kento (30 peças)", "price_cash": "R$ 89,90", "price_installments": null, "duration_or_scope": "Salmão, atum, camarão empanado, hossomaki", "highlight": true},
+    {"name": "Temaki de salmão", "price_cash": "R$ 32,00", "price_installments": null, "duration_or_scope": "Arroz, salmão fresco, cream cheese", "highlight": false}
+  ],
+  "conversation_profile": {
+    "business_mode": "reservation_based",
+    "primary_intents": ["fazer_reserva", "ver_cardapio", "pedir_delivery"],
+    "qualification_fields": [
+      {"key": "customer_name", "label": "Nome", "priority": "high", "ask_only_when_relevant": true, "prohibited_before_intent": false},
+      {"key": "party_size", "label": "Pessoas", "priority": "high", "ask_only_when_relevant": true, "prohibited_before_intent": false},
+      {"key": "reservation_date", "label": "Data", "priority": "high", "ask_only_when_relevant": true, "prohibited_before_intent": false},
+      {"key": "reservation_time", "label": "Horário", "priority": "medium", "ask_only_when_relevant": true, "prohibited_before_intent": false}
+    ],
+    "prohibited_behaviors": ["Não perguntar faixa de investimento para reserva", "Não sugerir pratos sem o cliente perguntar"]
+  }
+}
+```
+Nota: NÃO inclui budget. Pratos individuais no services. business_mode = reservation_based.
+
+### Exemplo 2: Nicho "escritório de advocacia"
+
+Input: escritório de advocacia
+Output esperado (resumo):
+```json
+{
+  "agent_name": "Dra. Renata",
+  "company_name": "Mendes & Associados Advogados",
+  "city": "Belo Horizonte",
+  "tagline": "Soluções jurídicas com acolhimento e transparência",
+  "services": [
+    {"name": "Consultoria trabalhista", "price_cash": "R$ 350,00", "price_installments": "3x R$ 120", "duration_or_scope": "Reunião inicial + parecer escrito", "highlight": true},
+    {"name": "Ação de divórcio consensual", "price_cash": "R$ 2.800,00", "price_installments": "6x R$ 480", "duration_or_scope": "Petição + acompanhamento até homologação", "highlight": false}
+  ],
+  "conversation_profile": {
+    "business_mode": "consultative",
+    "primary_intents": ["consulta_trabalhista", "consulta_familia", "consulta_consumidor"],
+    "qualification_fields": [
+      {"key": "customer_name", "label": "Nome", "priority": "high", "ask_only_when_relevant": true, "prohibited_before_intent": false},
+      {"key": "problem_type", "label": "Tipo de questão", "priority": "high", "ask_only_when_relevant": false, "prohibited_before_intent": false},
+      {"key": "urgency", "label": "Urgência", "priority": "medium", "ask_only_when_relevant": true, "prohibited_before_intent": false},
+      {"key": "budget", "label": "Orçamento", "priority": "low", "ask_only_when_relevant": true, "prohibited_before_intent": true}
+    ],
+    "prohibited_behaviors": ["Não perguntar orçamento como primeira pergunta", "Não dar parecer jurídico definitivo", "Não prometer resultado de processo"]
+  }
+}
+```
+Nota: budget é gradual (prohibited_before_intent=true). business_mode = consultative. Não promete resultado.
