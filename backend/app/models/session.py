@@ -38,6 +38,9 @@ class Session(Base):
         index=True,
     )
     ip_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
 
     messages = relationship(
         "Message", back_populates="session", cascade="all, delete-orphan", lazy="selectin"

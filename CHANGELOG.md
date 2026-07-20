@@ -9,12 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Operational kill switch with admin toggle (GET/POST /api/admin/killswitch)
+- Soft delete for sessions and leads (deleted_at column + Alembic migration 0002)
+- Frontend contact_url from backend config (replaces hardcoded WhatsApp link)
 - GitHub Actions CI (ruff + pytest + frontend build)
 - Security headers (nginx + backend middleware)
 - PII sanitizer in structlog pipeline
 - Vitest setup for frontend testing
 - Open Graph / Twitter Card meta tags
 - LICENSE, CHANGELOG, CONTRIBUTING files
+- HTTP integration tests for chat + admin routes (httpx AsyncClient)
+
+### Changed
+
+- reset.py now soft-deletes sessions instead of hard DELETE
+- Handoff is suppressed when kill_switch_handoff=false
 
 ## [0.3.0] - 2026-07-20
 

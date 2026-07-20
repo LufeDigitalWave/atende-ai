@@ -19,6 +19,7 @@ interface AgentMeta {
   openingMessage?: string;
   crmFields: CRMField[];
   businessMode: string;
+  contactUrl: string;
 }
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
         openingMessage: data.opening_message,
         crmFields: data.crm_fields || [],
         businessMode: data.business_mode || 'mixed',
+        contactUrl: data.contact_url || 'https://wa.me/5511999999999',
       });
       setLoading(false);
     } catch (err) {
@@ -110,6 +112,7 @@ function App() {
               agentName={agentMeta.agentName}
               companyName={agentMeta.companyName}
               suggestions={agentMeta.suggestions}
+              contactUrl={agentMeta.contactUrl}
             />
           </div>
 

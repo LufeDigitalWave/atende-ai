@@ -6,7 +6,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 import structlog
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_engine, get_session_factory
@@ -20,12 +20,17 @@ logger = get_logger("reset_job")
 
 async def cleanup_old_sessions(session: AsyncSession, ttl_hours: int = 24) -> int:
     """
-    Delete sessions older than ttl_hours.
+    Soft-delete sessions older than ttl_hours (sets deleted_at instead of DELETE).
 
-    Returns: number of sessions deleted
+    Returns: number of sessions soft-deleted
     """
     cutoff = datetime.now(timezone.utc) - timedelta(hours=ttl_hours)
-    stmt = delete(Session).where(Session.last_activity_at < cutoff)
+    now = datetime.now(timezone.utc)
+    stmt = (
+        update(Session)
+        .where(Session.last_activity_at < cutoff, Session.deleted_at.is_(None))
+        .values(deleted_at=now)
+    )
     result = await session.execute(stmt)
     await session.commit()
     return result.rowcount or 0

@@ -79,6 +79,10 @@ class Lead(Base):
     # Agendamento fictício (slot escolhido pelo visitante)
     scheduled_slot: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

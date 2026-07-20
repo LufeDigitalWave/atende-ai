@@ -22,6 +22,7 @@ interface ChatWindowProps {
   agentName?: string;
   companyName?: string;
   suggestions?: string[];
+  contactUrl?: string;
 }
 
 const DEFAULT_SUGGESTIONS = [
@@ -30,7 +31,7 @@ const DEFAULT_SUGGESTIONS = [
   'Vocês atendem sábado?',
 ];
 
-export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName = 'Clínica Renova', suggestions = DEFAULT_SUGGESTIONS }: ChatWindowProps) {
+export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName = 'Clínica Renova', suggestions = DEFAULT_SUGGESTIONS, contactUrl = 'https://wa.me/5511999999999' }: ChatWindowProps) {
   const {
     messages,
     isTyping,
@@ -245,7 +246,7 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
             </p>
             <div className="flex gap-2 justify-center flex-wrap">
               <a
-                href="https://wa.me/5511999999999?text=Vi%20a%20demo%20do%20Atende%20AI%20e%20quero%20saber%20mais"
+                href={`${contactUrl}?text=Vi%20a%20demo%20do%20Atende%20AI%20e%20quero%20saber%20mais`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2 text-xs font-medium bg-gradient-to-r from-brand-violet to-brand-cyan text-white rounded-lg hover:opacity-90 transition-all"

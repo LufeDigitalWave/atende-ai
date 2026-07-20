@@ -272,3 +272,40 @@ async def get_agent_info(
         embedding_provider=settings.embedding_provider,
         embedding_model=settings.embedding_model if settings.embedding_provider != "fake" else None,
     )
+
+
+# --- Kill Switch ---
+
+@router.get("/killswitch")
+async def get_killswitch(
+    admin: AdminUser = Depends(get_current_admin),
+) -> dict:
+    """Get current kill switch state."""
+    from app.services.killswitch import get_state
+    return get_state()
+
+
+@router.post("/killswitch")
+async def set_killswitch(
+    body: dict,
+    admin: AdminUser = Depends(get_current_admin),
+) -> dict:
+    """
+    Toggle a kill switch component.
+
+    Body: {"component": "chat"|"handoff", "enabled": true|false}
+    """
+    from app.services.killswitch import set_override, get_state
+
+    component = body.get("component")
+    enabled = body.get("enabled")
+
+    if component not in ("chat", "handoff"):
+        raise HTTPException(status_code=400, detail="component must be 'chat' or 'handoff'")
+    if not isinstance(enabled, bool):
+        raise HTTPException(status_code=400, detail="enabled must be true or false")
+
+    set_override(component, enabled)
+    logger.info(f"killswitch toggled: {component}={enabled} by {admin.username}")
+
+    return get_state()
