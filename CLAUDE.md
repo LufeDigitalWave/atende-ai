@@ -1,7 +1,7 @@
 # Atende AI — Convenções do Projeto
 
 > Item de portfólio público. Tudo aqui é fictício **exceto** a IA (Claude API).
-> Última atualização: 2026-07-16 (evolução v3).
+> Última atualização: 2026-07-20 (Sprint 0-5 — segurança, admin, CI, alerting, kill switch).
 
 ## Filosofia
 
@@ -435,6 +435,52 @@ perf(factory): cache profiles for 1h (already in main)
 5. Métricas reais (`correlation score>=50 ↔ handoff_produtivo`).
 
 Nenhuma vai pro MVP — a regra é: demo tem que caber num `docker compose up`.
+
+---
+
+## Estado operacional (2026-07-20)
+
+### Sprints entregues (0-5)
+
+| Sprint | Foco | PR |
+|---|---|---|
+| 0 | SQL injection fix, fail-fast secrets, sofia-* palette, getState reativo, anonimização | #1 |
+| 1 | Admin auth real, react-router, kanban funcional, mobile responsive | #1 |
+| 2 | CI GitHub Actions, meta OG/twitter, security headers, PII sanitizer, vitest, LICENSE/CHANGELOG | #1 |
+| 3 | Token logging (usage_log), budget alerting (webhook + Telegram), admin /custos real | #1 |
+| 4 | HTTP integration tests (httpx AsyncClient, 16 testes chat+admin) | #2 |
+| 5 | Kill switch operacional, soft delete (deleted_at), contact_url dinâmico | #3 |
+
+### Guarda-corpos ativos
+
+1. Rate limit per-session (2s) + per-IP (5 sessions/h)
+2. Budget cap diário (200k tokens) com alerting
+3. Message cap (30 msgs/sessão)
+4. Input cap (500 chars)
+5. Session TTL (24h) + soft-delete noturno
+6. Kill switch (chat + handoff, admin toggle)
+7. Fail-fast em segredos defaults em produção
+
+### CI
+
+- Backend: ruff + pytest (152 passed + 9 xfail SQLite)
+- Frontend: vite build + vitest (7 passed)
+- Trigger: push + PR para main
+
+### Testes
+
+- Backend: 161 testes (unitários + integração HTTP)
+- Frontend: 7 testes (Zustand store)
+- Integration tests marcados xfail em SQLite (passam em PostgreSQL CI)
+
+### Produção (VPS 93.127.211.7 — NÃO atualizada)
+
+Último deploy: 2026-07-16. As sprints 0-5 estão apenas no GitHub (main).
+Para aplicar em prod: `git pull + docker compose build + docker compose up -d + alembic upgrade head`.
+
+### Migration pendente em prod
+
+- `0002_soft_delete.py` — adiciona `deleted_at` em sessions/leads.
 
 ---
 

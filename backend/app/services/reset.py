@@ -1,6 +1,7 @@
-"""Daily reset job — prune old sessions + re-seed knowledge.
+"""Daily reset job — soft-delete old sessions + re-seed knowledge.
 
 Runs at 03:00 local time each day.
+Soft-deletes sessions (sets deleted_at) instead of hard DELETE since Sprint 5.
 """
 import asyncio
 from datetime import datetime, timedelta, timezone
