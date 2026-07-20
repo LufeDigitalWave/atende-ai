@@ -184,10 +184,10 @@ async def get_session(
             detail="invalid session_id format",
         )
 
-    # Query with eager loading
+    # Query with eager loading (exclude soft-deleted)
     stmt = (
         select(Session)
-        .where(Session.id == sid)
+        .where(Session.id == sid, Session.deleted_at.is_(None))
         .options(
             selectinload(Session.messages),
             selectinload(Session.lead).selectinload(Lead.events),
@@ -269,8 +269,8 @@ async def send_message(
             detail="invalid session_id format",
         )
 
-    # Fetch session
-    session = await db.scalar(select(Session).where(Session.id == sid))
+    # Fetch session (exclude soft-deleted)
+    session = await db.scalar(select(Session).where(Session.id == sid, Session.deleted_at.is_(None)))
     if not session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

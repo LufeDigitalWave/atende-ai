@@ -55,6 +55,14 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
 
   const [inputDisabled, setInputDisabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Cleanup: abort ongoing SSE stream on unmount or session change
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, [sessionId]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -89,6 +97,11 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
       createdAt: new Date().toISOString(),
       isStreaming: true,
     });
+
+    // Create AbortController for this stream
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       await sendMessage(
@@ -153,6 +166,8 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
           setTyping(false);
           setInputDisabled(false);
         },
+        // signal for abort
+        controller.signal,
       );
     } catch (err) {
       setTyping(false);

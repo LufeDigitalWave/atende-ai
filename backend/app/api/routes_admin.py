@@ -131,12 +131,15 @@ async def list_conversations(
     """
     List all sessions with pagination.
     """
-    # Count total
-    total = await db.scalar(select(func.count()).select_from(Session))
+    # Count total (exclude soft-deleted)
+    total = await db.scalar(
+        select(func.count()).select_from(Session).where(Session.deleted_at.is_(None))
+    )
 
-    # Fetch paginated with eager-loaded lead
+    # Fetch paginated with eager-loaded lead (exclude soft-deleted)
     stmt = (
         select(Session)
+        .where(Session.deleted_at.is_(None))
         .options(selectinload(Session.lead))
         .order_by(desc(Session.created_at))
         .limit(limit)
@@ -182,7 +185,7 @@ async def get_leads_kanban(
 
     for state in LeadState:
         leads = list((await db.scalars(
-            select(Lead).where(Lead.state == state).order_by(desc(Lead.updated_at))
+            select(Lead).where(Lead.state == state, Lead.deleted_at.is_(None)).order_by(desc(Lead.updated_at))
         )).all())
         result[state.value] = [
             {

@@ -75,11 +75,13 @@ export async function sendMessage(
   onQuickReplies: (options: Array<{ id: string; label: string }>) => void,
   onDone: (latencyMs: number, messageId: string) => void,
   onError: (code: string, message: string) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const response = await fetch(`${API_URL}/api/sessions/${sessionId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
+    signal,
   });
 
   if (!response.ok) {
