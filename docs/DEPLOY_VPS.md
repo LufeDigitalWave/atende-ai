@@ -1,12 +1,14 @@
 # Deploy na VPS — Atende AI
 
-> Instruções passo-a-passo para fazer deploy da demo na VPS 93.127.211.7 com nginx + certbot.
+> Template público de deploy. Substitua `<VPS_IP>`, `<APP_DOMAIN>`, `<SSH_USER>`, `<ORG>` e `<APP_DIR>` pelos valores reais do seu ambiente local/privado antes de executar.
+>
+> Instruções passo-a-passo para fazer deploy da demo na VPS `<VPS_IP>` com nginx + certbot.
 
 ## Pré-requisitos
 
 - VPS: Ubuntu 22.04+ com Docker/Swarm instalado
-- SSH acesso: `root@93.127.211.7`
-- Domínio: `atendeai.lufedigitalwave.com.br` apontando para 93.127.211.7 ✅
+- SSH acesso: `<SSH_USER>@<VPS_IP>`
+- Domínio: `<APP_DOMAIN>` apontando para `<VPS_IP>` ✅
 - OpenAI API key (pra factory gpt-4.1-mini)
 - Anthropic API key (pra agent claude-haiku-4-5)
 
@@ -15,7 +17,7 @@
 ## 1. SSH na VPS
 
 ```bash
-ssh root@93.127.211.7
+ssh <SSH_USER>@<VPS_IP>
 ```
 
 ---
@@ -24,7 +26,7 @@ ssh root@93.127.211.7
 
 ```bash
 cd /opt
-git clone https://github.com/LufeDigitalWave/atende-ai.git
+git clone https://github.com/<ORG>/atende-ai.git
 cd atende-ai
 ```
 
@@ -74,10 +76,10 @@ JWT_SECRET=$(openssl rand -hex 32)
 JWT_EXPIRES_HOURS=24
 
 # Frontend (build-time)
-VITE_API_URL=https://atendeai.lufedigitalwave.com.br
+VITE_API_URL=https://<APP_DOMAIN>
 
 # CORS
-CORS_ORIGINS=https://atendeai.lufedigitalwave.com.br
+CORS_ORIGINS=https://<APP_DOMAIN>
 EOF
 ```
 
@@ -141,7 +143,7 @@ docker service create \
   --name atende_web \
   --network atende_net \
   --publish 5175:80 \
-  --env VITE_API_URL=https://atendeai.lufedigitalwave.com.br \
+  --env VITE_API_URL=https://<APP_DOMAIN> \
   --constraint 'node.role == manager' \
   atende-ai-web:latest
 ```
@@ -162,7 +164,7 @@ upstream web_frontend {
 
 server {
     listen 80;
-    server_name atendeai.lufedigitalwave.com.br;
+    server_name <APP_DOMAIN>;
 
     # Redirect HTTP → HTTPS
     location / {
@@ -172,10 +174,10 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name atendeai.lufedigitalwave.com.br;
+    server_name <APP_DOMAIN>;
 
-    ssl_certificate /etc/letsencrypt/live/atendeai.lufedigitalwave.com.br/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/atendeai.lufedigitalwave.com.br/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/<APP_DOMAIN>/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/<APP_DOMAIN>/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
 
@@ -215,7 +217,7 @@ sudo systemctl reload nginx
 
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d atendeai.lufedigitalwave.com.br
+sudo certbot --nginx -d <APP_DOMAIN>
 ```
 
 ---
@@ -233,7 +235,7 @@ docker service logs atende_api -f
 docker service logs atende_db -f
 
 # Testar acesso
-curl https://atendeai.lufedigitalwave.com.br/api/health
+curl https://<APP_DOMAIN>/api/health
 ```
 
 Esperado:
@@ -255,7 +257,7 @@ Esperado:
 crontab -e
 
 # Adicionar:
-0 3 * * * cd /opt/atende-ai && docker run --rm --network atende_net -e DATABASE_URL="postgresql+asyncpg://atende:$(grep POSTGRES_PASSWORD .env | cut -d= -f2)@db:5432/atende_ai" atende-ai-api:latest python -m app.services.reset
+0 3 * * * cd /opt/<APP_DIR> && docker run --rm --network atende_net -e DATABASE_URL="postgresql+asyncpg://atende:$(grep POSTGRES_PASSWORD .env | cut -d= -f2)@db:5432/atende_ai" atende-ai-api:latest python -m app.services.reset
 ```
 
 ---
@@ -278,10 +280,10 @@ crontab -e
 docker exec atende_db psql -U atende -d atende_ai -c "SELECT pg_size_pretty(pg_database_size('atende_ai'));"
 
 # Sessões ativas
-curl https://atendeai.lufedigitalwave.com.br/admin/conversas  # com auth JWT
+curl https://<APP_DOMAIN>/admin/conversas  # com auth JWT
 
 # Tokens de hoje
-curl https://atendeai.lufedigitalwave.com.br/admin/custos  # com auth JWT
+curl https://<APP_DOMAIN>/admin/custos  # com auth JWT
 ```
 
 ---

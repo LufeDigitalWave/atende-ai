@@ -4,7 +4,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -74,6 +74,28 @@ class Settings(BaseSettings):
         # access to llm_provider here, so we just return v as-is. The startup
         # check in main.py performs the actual fail-fast.
         return v
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self):
+        """Fail fast when production would run with unsafe admin/JWT defaults."""
+        if self.environment != "production":
+            return self
+
+        if not self.jwt_secret or self.jwt_secret == "change-me-in-production":
+            raise ValueError(
+                "JWT_SECRET must be set to a non-default value in production"
+            )
+        if len(self.jwt_secret) < 32:
+            raise ValueError("JWT_SECRET must be at least 32 characters in production")
+
+        if not self.admin_password or self.admin_password == "admin":
+            raise ValueError(
+                "ADMIN_PASSWORD must be set to a non-default value in production"
+            )
+        if len(self.admin_password) < 12:
+            raise ValueError("ADMIN_PASSWORD must be at least 12 characters in production")
+
+        return self
 
     @property
     def is_production(self) -> bool:

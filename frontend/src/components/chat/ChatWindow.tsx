@@ -50,6 +50,8 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
     setBanner,
   } = useSessionStore();
 
+  const leadState = useSessionStore((s) => s.lead?.state);
+
   const [inputDisabled, setInputDisabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -169,6 +171,8 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
     handleSend(label);
   };
 
+  const isConversationComplete = leadState === 'handoff' || leadState === 'qualificado';
+
   return (
     <div className="flex flex-col h-full bg-white rounded-lg border border-gray-200 shadow-sm">
       {/* Chat header */}
@@ -230,7 +234,7 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
       </div>
 
       {/* Completion panel — shown after handoff or qualification */}
-      {(useSessionStore.getState().lead?.state === 'handoff' || useSessionStore.getState().lead?.state === 'qualificado') && (
+      {isConversationComplete && (
         <div className="border-t border-gray-200 bg-gradient-to-r from-brand-violet/5 to-brand-cyan/5 p-4">
           <div className="text-center">
             <p className="text-sm font-semibold text-gray-800 mb-1">
@@ -265,11 +269,11 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
       {/* Input */}
       <ChatInput
         onSend={handleSend}
-        disabled={inputDisabled || isCapped || useSessionStore.getState().lead?.state === 'handoff'}
+        disabled={inputDisabled || isCapped || isConversationComplete}
         placeholder={
           isCapped
             ? 'Sessão encerrada'
-            : useSessionStore.getState().lead?.state === 'handoff'
+            : isConversationComplete
               ? 'Conversa finalizada — lead encaminhado'
               : 'Digite sua mensagem...'
         }

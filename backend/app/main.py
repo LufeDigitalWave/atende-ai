@@ -43,6 +43,18 @@ async def startup_event() -> None:
         f"starting atende-ai (env={settings.environment}, provider={settings.llm_provider})"
     )
 
+    # Defense-in-depth: Settings already validates this, but keep startup
+    # checks explicit so production fails with an operator-friendly message.
+    if settings.is_production:
+        if not settings.jwt_secret or settings.jwt_secret == "change-me-in-production":
+            raise RuntimeError("JWT_SECRET must be set to a non-default value in production")
+        if len(settings.jwt_secret) < 32:
+            raise RuntimeError("JWT_SECRET must be at least 32 characters in production")
+        if not settings.admin_password or settings.admin_password == "admin":
+            raise RuntimeError("ADMIN_PASSWORD must be set to a non-default value in production")
+        if len(settings.admin_password) < 12:
+            raise RuntimeError("ADMIN_PASSWORD must be at least 12 characters in production")
+
     # Test DB connection
     try:
         engine = get_engine()

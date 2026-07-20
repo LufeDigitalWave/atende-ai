@@ -8,7 +8,7 @@
 #   - web  : React + Vite (port 5175 → nginx 80)
 #
 # Traefik labels register the subdomain with the EasyPanel Traefik instance.
-# Domain: atendeai.lufedigitalwave.com.br
+# Domain: ${APP_DOMAIN:-atendeai.seudominio.com}
 # ============================================================
 
 services:
@@ -55,7 +55,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
-      - "traefik.http.routers.atende-api.rule=Host(`atendeai.lufedigitalwave.com.br`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.atende-api.rule=Host(`${APP_DOMAIN:-atendeai.seudominio.com}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.atende-api.entrypoints=https"
       - "traefik.http.routers.atende-api.tls=true"
       - "traefik.http.routers.atende-api.tls.certresolver=letsencrypt"
@@ -66,7 +66,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-https://atendeai.lufedigitalwave.com.br}
+        VITE_API_URL: ${VITE_API_URL:-https://${APP_DOMAIN:-atendeai.seudominio.com}}
     container_name: atende_web
     restart: unless-stopped
     depends_on:
@@ -74,14 +74,14 @@ services:
     ports:
       - "5175:80"
     environment:
-      VITE_API_URL: ${VITE_API_URL:-https://atendeai.lufedigitalwave.com.br}
+      VITE_API_URL: ${VITE_API_URL:-https://${APP_DOMAIN:-atendeai.seudominio.com}}
     networks:
       - atende_net
       - easypanel
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
-      - "traefik.http.routers.atende-web.rule=Host(`atendeai.lufedigitalwave.com.br`)"
+      - "traefik.http.routers.atende-web.rule=Host(`${APP_DOMAIN:-atendeai.seudominio.com}`)"
       - "traefik.http.routers.atende-web.entrypoints=https"
       - "traefik.http.routers.atende-web.tls=true"
       - "traefik.http.routers.atende-web.tls.certresolver=letsencrypt"

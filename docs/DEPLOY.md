@@ -14,7 +14,7 @@
 ### 2. Criar projeto
 1. EasyPanel → New Project → name: `atende-ai`.
 2. Add Service → App:
-   - Source: GitHub repo `LufeDigitalWave/atende-ai`.
+   - Source: GitHub repo `<ORG>/atende-ai`.
    - Build path: `/`.
    - Dockerfile: `./Dockerfile.web` (criar wrapper que aponta pra `frontend/Dockerfile`).
 
@@ -57,7 +57,7 @@ Copie do `.env.example` e preencha:
 ```bash
 # VPS Ubuntu 22.04+
 apt update && apt install -y docker.io docker-compose-plugin
-git clone https://github.com/LufeDigitalWave/atende-ai.git
+git clone https://github.com/<ORG>/atende-ai.git
 cd atende-ai
 cp .env.example .env
 nano .env  # preencher

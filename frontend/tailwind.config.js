@@ -14,6 +14,16 @@ export default {
           violet_light: '#c084fc',  // 400
           cyan_light: '#22d3ee',    // 400
         },
+        // Sofia assistant accent (green/teal)
+        sofia: {
+          50: '#eefcf6',
+          100: '#d6f6e7',
+          300: '#5fdba9',
+          400: '#27c890',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+        },
         // Dark canvas (quasi-black, bluish tint)
         dark: {
           bg: '#0a0f1f',      // Deep navy-black
