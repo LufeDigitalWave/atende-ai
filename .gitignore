@@ -8,6 +8,7 @@ venv/
 .ruff_cache/
 .mypy_cache/
 .coverage
+.cov.json
 htmlcov/
 
 # --- Node ---
@@ -30,6 +31,10 @@ dist/
 
 # --- Docker ---
 docker-compose.override.yml
+
+# --- Agent workspace ---
+.superpowers/
+docs/superpowers/
 
 # --- Logs ---
 *.log

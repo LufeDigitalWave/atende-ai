@@ -4,7 +4,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -52,6 +52,19 @@ class Settings(BaseSettings):
     max_input_chars: int = 500
     session_ttl_hours: int = 24
 
+    # Budget alerting
+    budget_alert_enabled: bool = False
+    budget_alert_thresholds: str = "50,80,100"  # comma-separated percentages
+    budget_alert_webhook_url: str | None = None
+    budget_alert_telegram_token: str | None = None
+    budget_alert_telegram_chat_id: str | None = None
+    budget_alert_cooldown_hours: int = 6
+
+    @property
+    def budget_alert_thresholds_list(self) -> list[int]:
+        """Parse comma-separated alert thresholds."""
+        return [int(t.strip()) for t in self.budget_alert_thresholds.split(",") if t.strip()]
+
     # Admin
     admin_username: str = "admin"
     admin_password: str = "admin"
@@ -74,6 +87,28 @@ class Settings(BaseSettings):
         # access to llm_provider here, so we just return v as-is. The startup
         # check in main.py performs the actual fail-fast.
         return v
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self):
+        """Fail fast when production would run with unsafe admin/JWT defaults."""
+        if self.environment != "production":
+            return self
+
+        if not self.jwt_secret or self.jwt_secret == "change-me-in-production":
+            raise ValueError(
+                "JWT_SECRET must be set to a non-default value in production"
+            )
+        if len(self.jwt_secret) < 32:
+            raise ValueError("JWT_SECRET must be at least 32 characters in production")
+
+        if not self.admin_password or self.admin_password == "admin":
+            raise ValueError(
+                "ADMIN_PASSWORD must be set to a non-default value in production"
+            )
+        if len(self.admin_password) < 12:
+            raise ValueError("ADMIN_PASSWORD must be at least 12 characters in production")
+
+        return self
 
     @property
     def is_production(self) -> bool:

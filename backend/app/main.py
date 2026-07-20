@@ -9,8 +9,9 @@ Wiring:
 from __future__ import annotations
 
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import get_settings
 from app.core.database import dispose_engine, get_engine, get_session_factory
@@ -25,6 +26,21 @@ app = FastAPI(
     version="0.1.0",
     description="Demo público de agente SDR de IA — Clínica Renova",
 )
+
+# Security headers (defense-in-depth for /api/ responses)
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response: Response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        if settings.is_production:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS
 app.add_middleware(
@@ -42,6 +58,18 @@ async def startup_event() -> None:
     logger.info(
         f"starting atende-ai (env={settings.environment}, provider={settings.llm_provider})"
     )
+
+    # Defense-in-depth: Settings already validates this, but keep startup
+    # checks explicit so production fails with an operator-friendly message.
+    if settings.is_production:
+        if not settings.jwt_secret or settings.jwt_secret == "change-me-in-production":
+            raise RuntimeError("JWT_SECRET must be set to a non-default value in production")
+        if len(settings.jwt_secret) < 32:
+            raise RuntimeError("JWT_SECRET must be at least 32 characters in production")
+        if not settings.admin_password or settings.admin_password == "admin":
+            raise RuntimeError("ADMIN_PASSWORD must be set to a non-default value in production")
+        if len(settings.admin_password) < 12:
+            raise RuntimeError("ADMIN_PASSWORD must be at least 12 characters in production")
 
     # Test DB connection
     try:

@@ -5,14 +5,17 @@ All routes require JWT auth.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import desc, select
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.security import create_access_token, verify_password, hash_password
+from app.core.security import create_access_token, decode_access_token, verify_password, hash_password
 from app.core.config import get_settings
 from app.models import AdminUser, Session, Lead, LeadState, UsageLog
 from app.schemas.chat import (
@@ -25,31 +28,52 @@ from app.schemas.chat import (
     AdminCostsBudget,
     AdminAgentInfo,
 )
-from app.services.budget import get_daily_usage
+from app.services.budget import get_daily_usage, get_daily_usage_detailed
 
 logger = structlog.get_logger("routes_admin")
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 settings = get_settings()
 
 
-async def get_current_admin(
-    token: str = None, db: AsyncSession = Depends(get_db)
-) -> AdminUser:
-    """
-    Validate JWT and return admin user.
+_bearer = HTTPBearer(auto_error=False)
 
-    TODO: extract token from Authorization header in passo 5.
-    """
-    if not token:
+
+async def get_current_admin(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> AdminUser:
+    """Validate JWT from Authorization header and return admin user."""
+    if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="missing token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    # TODO: decode JWT and fetch user
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="invalid token",
-    )
+
+    payload = decode_access_token(credentials.credentials)
+    if not payload or "sub" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        user_id = UUID(payload["sub"])
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid token subject",
+        )
+
+    user = await db.scalar(select(AdminUser).where(AdminUser.id == user_id))
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="user not found or inactive",
+        )
+
+    return user
 
 
 @router.post(
@@ -108,11 +132,12 @@ async def list_conversations(
     List all sessions with pagination.
     """
     # Count total
-    total = await db.scalar(select(lambda: 1).select_from(Session))
+    total = await db.scalar(select(func.count()).select_from(Session))
 
-    # Fetch paginated
+    # Fetch paginated with eager-loaded lead
     stmt = (
         select(Session)
+        .options(selectinload(Session.lead))
         .order_by(desc(Session.created_at))
         .limit(limit)
         .offset(offset)
@@ -156,11 +181,20 @@ async def get_leads_kanban(
     }
 
     for state in LeadState:
-        leads = await db.scalars(
+        leads = list((await db.scalars(
             select(Lead).where(Lead.state == state).order_by(desc(Lead.updated_at))
-        )
-        result[state.value] = []
-        # TODO: convert to LeadOut
+        )).all())
+        result[state.value] = [
+            {
+                "id": str(lead.id),
+                "name": lead.name,
+                "service_interest": lead.service_interest,
+                "score": lead.score,
+                "state": lead.state.value if lead.state else "novo",
+                "updated_at": lead.updated_at.isoformat() if lead.updated_at else None,
+            }
+            for lead in leads
+        ]
 
     return result
 
@@ -177,27 +211,38 @@ async def get_costs(
     """
     Get cost breakdown and budget status.
     """
-    # Today's usage
-    total_tokens, total_cost = await get_daily_usage(db)
-    cost_brl = float(total_cost) * 5  # 1 USD = 5 BRL
+    # Today's detailed usage
+    usage = await get_daily_usage_detailed(db)
+    cost_brl = usage["cost_usd"] * 5  # 1 USD ≈ 5 BRL
 
     today = AdminCostsToday(
-        calls=0,  # TODO: count from usage_log
-        input_tokens=0,  # TODO
-        output_tokens=0,  # TODO
-        cached_tokens=0,  # TODO
-        cost_usd=float(total_cost),
+        calls=usage["calls"],
+        input_tokens=usage["input_tokens"],
+        output_tokens=usage["output_tokens"],
+        cached_tokens=usage["cached_tokens"],
+        cost_usd=usage["cost_usd"],
         cost_brl=cost_brl,
     )
 
     # History (last N days)
-    history = []  # TODO: aggregate by date
+    from datetime import date as date_type, timedelta as td
+    history = []
+    for i in range(1, days + 1):
+        d = date_type.today() - td(days=i)
+        day_usage = await get_daily_usage_detailed(db, d)
+        if day_usage["calls"] > 0:
+            history.append({
+                "date": d.isoformat(),
+                "calls": day_usage["calls"],
+                "cost_brl": day_usage["cost_usd"] * 5,
+            })
 
     # Budget
+    total_tokens = usage["input_tokens"] + usage["output_tokens"]
     budget = AdminCostsBudget(
         daily_tokens=settings.daily_token_budget,
         used_today=total_tokens,
-        percent_used=round(100 * total_tokens / settings.daily_token_budget, 2),
+        percent_used=round(100 * total_tokens / max(settings.daily_token_budget, 1), 2),
     )
 
     return AdminCostsResponse(

@@ -66,22 +66,39 @@ class PgvectorRetriever(Retriever):
 class TsvectorRetriever(Retriever):
     """Full-text search via tsvector (fallback without embeddings)."""
 
+    # Safety limits for keyword extraction
+    _MAX_KEYWORDS = 10
+    _MAX_KW_LENGTH = 64
+
     async def retrieve(
         self, session: AsyncSession, query: str, top_k: int = 3
     ) -> list[RetrievalResult]:
         # Simple keyword match — lower quality but works offline
-        # TODO: proper PostgreSQL tsvector rank
-        keywords = query.lower().split()
-        where_clause = " OR ".join(
-            [f"chunk_text ILIKE '%{kw}%'" for kw in keywords]
+        # Uses parameterized queries to prevent SQL injection.
+        keywords = [
+            kw
+            for kw in query.lower().split()
+            if kw and len(kw) <= self._MAX_KW_LENGTH
+        ][: self._MAX_KEYWORDS]
+
+        if not keywords:
+            return []
+
+        # Build parameterized ILIKE conditions: :kw_0, :kw_1, ...
+        conditions = " OR ".join(
+            [f"chunk_text ILIKE :kw_{i}" for i in range(len(keywords))]
         )
         stmt = text(
             f"""SELECT chunk_text, source_file, 0.5 as similarity
                FROM knowledge_chunks
-               WHERE {where_clause}
+               WHERE {conditions}
                LIMIT :limit"""
         )
-        rows = await session.execute(stmt.bindparams(limit=top_k))
+        # Bind each keyword wrapped in % for substring match
+        params = {f"kw_{i}": f"%{kw}%" for i, kw in enumerate(keywords)}
+        params["limit"] = top_k
+
+        rows = await session.execute(stmt, params)
         return [
             RetrievalResult(
                 chunk_text=row.chunk_text,
