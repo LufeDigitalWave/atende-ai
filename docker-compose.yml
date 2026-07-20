@@ -87,6 +87,31 @@ services:
       - "traefik.http.routers.atende-web.tls.certresolver=letsencrypt"
       - "traefik.http.services.atende-web.loadbalancer.server.port=80"
 
+  # Daily reset job (soft-delete expired sessions + reseed knowledge)
+  reset:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atende_reset
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - atende_net
+    environment:
+      TZ: America/Sao_Paulo
+    command: >
+      sh -c "while true; do
+        echo 'Waiting 24h until next reset...';
+        sleep 86400;
+        echo 'Running daily reset...';
+        python -m app.services.reset;
+        echo 'Reset complete.';
+      done"
+
 volumes:
   atende_pgdata:
     driver: local
