@@ -6,7 +6,10 @@
 
 **English Summary**: Public portfolio demo showing a real AI SDR agent qualifying leads in real time, with a live mini-CRM that updates as the conversation happens. Single command to run (`docker compose up`). The agent runs against the real Claude API by default (`claude-haiku-4-5` for cost), with a scripted `FakeLLMProvider` fallback so the whole demo works offline.
 
-![demo preview](docs/demo.gif)
+<!-- Demo GIF: gere com as instruções em docs/screenshots/README.md -->
+<!-- ![demo preview](docs/demo.gif) -->
+
+> 📸 **Demo visual em breve.** Instruções de captura em [`docs/screenshots/README.md`](docs/screenshots/README.md).
 
 ---
 

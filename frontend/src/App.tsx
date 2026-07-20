@@ -99,12 +99,12 @@ function App() {
       </div>
 
       {/* Main layout — device frame effect */}
-      <div className="flex-1 overflow-hidden flex items-center justify-center p-6">
-        <div className="w-full h-full max-w-5xl rounded-2xl border-8 border-gray-300 bg-white shadow-2xl overflow-hidden flex gap-4 p-4" style={{
+      <div className="flex-1 overflow-hidden flex items-center justify-center p-2 lg:p-6">
+        <div className="w-full h-full max-w-5xl rounded-2xl border-4 lg:border-8 border-gray-300 bg-white shadow-2xl overflow-hidden flex flex-col lg:flex-row gap-0 lg:gap-4 p-2 lg:p-4" style={{
           boxShadow: '0 20px 60px rgba(168, 85, 247, 0.15), 0 0 100px rgba(6, 182, 212, 0.1)',
         }}>
-          {/* Chat (left) */}
-          <div className="flex-1 flex flex-col min-w-0">
+          {/* Chat */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
             <ChatWindow
               sessionId={sessionId!}
               agentName={agentMeta.agentName}
@@ -113,8 +113,8 @@ function App() {
             />
           </div>
 
-          {/* CRM ao vivo (right) */}
-          <div className="w-80 border-l border-gray-200 pl-4 flex flex-col">
+          {/* CRM ao vivo — abaixo em mobile, lateral em desktop */}
+          <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 pt-3 lg:pt-0 lg:pl-4 flex flex-col max-h-60 lg:max-h-none overflow-auto">
             <div className="text-xs font-semibold text-gray-700 mb-4 uppercase tracking-wider">
               📊 CRM ao vivo
             </div>

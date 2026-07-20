@@ -5,14 +5,17 @@ All routes require JWT auth.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import desc, select
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.security import create_access_token, verify_password, hash_password
+from app.core.security import create_access_token, decode_access_token, verify_password, hash_password
 from app.core.config import get_settings
 from app.models import AdminUser, Session, Lead, LeadState, UsageLog
 from app.schemas.chat import (
@@ -32,24 +35,45 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 settings = get_settings()
 
 
-async def get_current_admin(
-    token: str = None, db: AsyncSession = Depends(get_db)
-) -> AdminUser:
-    """
-    Validate JWT and return admin user.
+_bearer = HTTPBearer(auto_error=False)
 
-    TODO: extract token from Authorization header in passo 5.
-    """
-    if not token:
+
+async def get_current_admin(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> AdminUser:
+    """Validate JWT from Authorization header and return admin user."""
+    if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="missing token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    # TODO: decode JWT and fetch user
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="invalid token",
-    )
+
+    payload = decode_access_token(credentials.credentials)
+    if not payload or "sub" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        user_id = UUID(payload["sub"])
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid token subject",
+        )
+
+    user = await db.scalar(select(AdminUser).where(AdminUser.id == user_id))
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="user not found or inactive",
+        )
+
+    return user
 
 
 @router.post(
@@ -108,11 +132,12 @@ async def list_conversations(
     List all sessions with pagination.
     """
     # Count total
-    total = await db.scalar(select(lambda: 1).select_from(Session))
+    total = await db.scalar(select(func.count()).select_from(Session))
 
-    # Fetch paginated
+    # Fetch paginated with eager-loaded lead
     stmt = (
         select(Session)
+        .options(selectinload(Session.lead))
         .order_by(desc(Session.created_at))
         .limit(limit)
         .offset(offset)
@@ -156,11 +181,20 @@ async def get_leads_kanban(
     }
 
     for state in LeadState:
-        leads = await db.scalars(
+        leads = list((await db.scalars(
             select(Lead).where(Lead.state == state).order_by(desc(Lead.updated_at))
-        )
-        result[state.value] = []
-        # TODO: convert to LeadOut
+        )).all())
+        result[state.value] = [
+            {
+                "id": str(lead.id),
+                "name": lead.name,
+                "service_interest": lead.service_interest,
+                "score": lead.score,
+                "state": lead.state.value if lead.state else "novo",
+                "updated_at": lead.updated_at.isoformat() if lead.updated_at else None,
+            }
+            for lead in leads
+        ]
 
     return result
 
