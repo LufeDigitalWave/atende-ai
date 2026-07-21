@@ -67,8 +67,14 @@ def compute_score_v3(
         breakdown.add(scoring_event, points)
 
     # 3. Bonus: scheduling confirmed (date + time both present = strong qualification signal)
-    has_date = any(ef.key in ("reservation_date", "availability", "scheduled_date") and ef.value for ef in extraction.extracted_fields)
-    has_time = any(ef.key in ("reservation_time", "scheduled_time") and ef.value for ef in extraction.extracted_fields)
+    has_date = (
+        "date_informed" in breakdown.to_dict()
+        or any(ef.key in ("reservation_date", "availability", "scheduled_date") and ef.value for ef in extraction.extracted_fields)
+    )
+    has_time = (
+        "time_informed" in breakdown.to_dict()
+        or any(ef.key in ("reservation_time", "scheduled_time") and ef.value for ef in extraction.extracted_fields)
+    )
     if has_date and has_time:
         bonus = conv.lead_scoring_rules.get("scheduling_confirmed", 30)
         breakdown.add("scheduling_confirmed", bonus)
