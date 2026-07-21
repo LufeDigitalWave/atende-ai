@@ -250,6 +250,36 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
         )}
       </div>
 
+      {/* Demo action panel — appears after 4+ user messages, independent of score/handoff */}
+      {!isConversationComplete && messages.filter(m => m.role === 'user').length >= 4 && (
+        <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-gray-500 flex-1">
+              Gostou da experiência? Esse agente funciona no WhatsApp real.
+            </p>
+            <div className="flex gap-2 shrink-0">
+              <a
+                href={`${contactUrl}?text=Vi%20a%20demo%20do%20Atende%20AI%20e%20quero%20saber%20mais`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-brand-violet to-brand-cyan text-white rounded-lg hover:opacity-90 transition-all"
+              >
+                Quero no meu negócio
+              </a>
+              <button
+                onClick={() => {
+                  useSessionStore.getState().reset();
+                  window.location.reload();
+                }}
+                className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Outro nicho
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Completion panel — shown after handoff, qualification, or high score */}
       {isConversationComplete && (
         <div className="border-t border-gray-200 bg-gradient-to-r from-brand-violet/5 to-brand-cyan/5 p-4">
