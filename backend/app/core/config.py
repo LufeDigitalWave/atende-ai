@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     # Core
     environment: Literal["development", "production", "test"] = "development"
     log_level: str = "INFO"
-    contact_url: str = "https://wa.me/5511999999999"
+    contact_url: str = "https://wa.me/5511913289497"
 
     # Database
     database_url: str = Field(
