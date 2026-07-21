@@ -121,13 +121,14 @@ class TestComputeScoreV3:
             ],
         )
         score, breakdown = compute_score_v3(ext, _restaurant_profile())
-        # 10 (intent) + 10 (name) + 15 (party) + 15 (date) + 15 (time) = 65
-        assert score == 65
+        # 10 (intent) + 10 (name) + 15 (party) + 15 (date) + 15 (time) + 30 (scheduling_confirmed) = 95
+        assert score == 95
         assert breakdown["intent_reserva"] == 10
         assert breakdown["name_informed"] == 10
         assert breakdown["party_size_informed"] == 15
         assert breakdown["date_informed"] == 15
         assert breakdown["time_informed"] == 15
+        assert breakdown["scheduling_confirmed"] == 30
 
     def test_score_capped_at_100(self):
         ext = ExtractedLeadData(

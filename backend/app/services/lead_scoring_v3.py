@@ -66,9 +66,20 @@ def compute_score_v3(
         points = conv.lead_scoring_rules.get(scoring_event, _default_points_for_field(ef.key))
         breakdown.add(scoring_event, points)
 
-    # 3. Handoff (no scoring — handled by state machine)
+    # 3. Bonus: scheduling confirmed (date + time both present = strong qualification signal)
+    has_date = any(ef.key in ("reservation_date", "availability", "scheduled_date") and ef.value for ef in extraction.extracted_fields)
+    has_time = any(ef.key in ("reservation_time", "scheduled_time") and ef.value for ef in extraction.extracted_fields)
+    if has_date and has_time:
+        bonus = conv.lead_scoring_rules.get("scheduling_confirmed", 30)
+        breakdown.add("scheduling_confirmed", bonus)
 
-    # 4. Cap at 100
+    # 4. Bonus: service interest expressed (mapped from various keys)
+    has_service = any(ef.key in ("service_interest", "product_interest", "need", "course_interest") and ef.value for ef in extraction.extracted_fields)
+    if has_service and "service_expressed" not in breakdown.to_dict():
+        bonus = conv.lead_scoring_rules.get("service_expressed", 20)
+        breakdown.add("service_expressed", bonus)
+
+    # 5. Cap at 100
     final_score = min(breakdown.total, 100)
     return final_score, breakdown.to_dict()
 
@@ -82,12 +93,16 @@ def _field_to_scoring_event(key: str, conv: ConversationProfile) -> str | None:
         "party_size": "party_size_informed",
         "reservation_date": "date_informed",
         "reservation_time": "time_informed",
+        "scheduled_date": "date_informed",
+        "scheduled_time": "time_informed",
         "need": "need_informed",
         "urgency": "urgency_informed",
         "availability": "availability_informed",
         "problem_type": "problem_informed",
         "decision_maker": "decision_maker_informed",
         "product_interest": "product_informed",
+        "service_interest": "service_informed",
+        "course_interest": "service_informed",
         "delivery_zone": "delivery_zone_informed",
         "payment_preference": "payment_informed",
     }
@@ -101,12 +116,16 @@ def _default_points_for_field(key: str) -> int:
         "party_size": 15,
         "reservation_date": 15,
         "reservation_time": 15,
+        "scheduled_date": 15,
+        "scheduled_time": 15,
         "need": 20,
         "urgency": 15,
         "availability": 15,
         "problem_type": 15,
         "decision_maker": 20,
         "product_interest": 15,
+        "service_interest": 20,
+        "course_interest": 20,
         "delivery_zone": 10,
         "payment_preference": 10,
     }
