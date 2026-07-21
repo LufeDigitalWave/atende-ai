@@ -78,19 +78,18 @@ function FieldRow({ label, value, priority }: { label: string; value: string | n
   const filled = value && value !== 'nao_informado' && value !== 'nao_informada' && value.trim() !== '';
   const isHigh = priority === 'high';
 
+  if (!filled) {
+    // Hide empty fields to reduce visual noise
+    return null;
+  }
+
   return (
-    <div className="flex items-center justify-between">
-      <span className={`text-xs ${isHigh ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
+    <div className="flex items-start justify-between gap-2 py-1.5 border-b border-gray-50 last:border-0">
+      <span className={`text-xs shrink-0 ${isHigh ? 'text-gray-700 font-semibold' : 'text-gray-500'}`}>
         {label}
       </span>
-      <span
-        className={`text-xs font-mono transition-all duration-300 ${
-          filled
-            ? 'text-gray-900 bg-gradient-to-r from-brand-violet/10 to-brand-cyan/10 px-2 py-0.5 rounded'
-            : 'text-gray-300 italic'
-        }`}
-      >
-        {filled ? value : '—'}
+      <span className="text-xs text-gray-900 font-medium text-right bg-sofia-50 px-2 py-0.5 rounded">
+        {value}
       </span>
     </div>
   );

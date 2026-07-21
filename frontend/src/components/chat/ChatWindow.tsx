@@ -187,7 +187,8 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
     handleSend(label);
   };
 
-  const isConversationComplete = leadState === 'handoff' || leadState === 'qualificado';
+  const leadScore = useSessionStore((s) => s.lead?.score ?? 0);
+  const isConversationComplete = leadState === 'handoff' || leadState === 'qualificado' || leadScore >= 80;
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -249,12 +250,14 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
         )}
       </div>
 
-      {/* Completion panel — shown after handoff or qualification */}
+      {/* Completion panel — shown after handoff, qualification, or high score */}
       {isConversationComplete && (
         <div className="border-t border-gray-200 bg-gradient-to-r from-brand-violet/5 to-brand-cyan/5 p-4">
           <div className="text-center">
             <p className="text-sm font-semibold text-gray-800 mb-1">
-              ✅ Lead qualificado com sucesso
+              {leadState === 'handoff'
+                ? '🤝 Lead encaminhado para vendedor'
+                : `✅ Lead qualificado (score ${leadScore}/100)`}
             </p>
             <p className="text-xs text-gray-600 mb-3">
               Viu como a IA qualifica em tempo real? Esse mesmo motor funciona no WhatsApp da sua empresa.
@@ -264,16 +267,16 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
                 href={`${contactUrl}?text=Vi%20a%20demo%20do%20Atende%20AI%20e%20quero%20saber%20mais`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 text-xs font-medium bg-gradient-to-r from-brand-violet to-brand-cyan text-white rounded-lg hover:opacity-90 transition-all"
+                className="px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-brand-violet to-brand-cyan text-white rounded-lg hover:opacity-90 transition-all shadow-md"
               >
-                Quero isso na minha empresa →
+                Quero isso no meu negócio →
               </a>
               <button
                 onClick={() => {
                   useSessionStore.getState().reset();
                   window.location.reload();
                 }}
-                className="px-4 py-2 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Testar outro nicho
               </button>

@@ -146,6 +146,9 @@ Acione handoff quando QUALQUER destas condições for verdadeira:
 - Se o visitante pedir humano explicitamente (palavras como 'atendente', 'humano', 'pessoa real'), SEMPRE should_handoff=true
 - NUNCA invente dados fora do que o visitante disse
 - detected_intent: null se a mensagem não tem intenção clara (ex: 'oi', 'obrigado')
+- NUNCA extraia saudações, agradecimentos ou palavras genéricas como nome:
+  NÃO são nomes: 'obrigado', 'ok', 'sim', 'não', 'oi', 'olá', 'tudo bem', 'valeu', 'bom dia', 'boa tarde', 'boa noite', 'entendi', 'legal', 'beleza'
+  SÓ extraia customer_name se o visitante explicitamente disser: 'meu nome é X', 'eu sou X', 'pode me chamar de X', ou o agente confirmar o nome em resposta
 """
     return prompt
 

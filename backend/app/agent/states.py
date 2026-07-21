@@ -83,27 +83,22 @@ def auto_transition(lead: Lead) -> StateTransition | None:
     """
     Automatically transition based on qualification progress.
 
-    Rules:
-    - If in novo and has any field, move to em_qualificacao
-    - If in em_qualificacao and has all 5 fields, move to qualificado
-    - No auto-transition from qualificado onward (requires explicit action)
-    """
-    all_fields_complete = (
-        lead.name
-        and lead.service_interest
-        and lead.complaint
-        and lead.budget_range.value != "nao_informado"
-        and lead.urgency.value != "nao_informada"
-    )
+    Rules (v3 — contextual, not universal):
+    - If in novo and has any field OR score > 0, move to em_qualificacao
+    - If in em_qualificacao and score >= 80, move to qualificado
+    - No auto-transition from qualificado onward (requires explicit handoff)
 
+    Note: v3 does NOT require all 5 legacy fields. Score is the authority.
+    """
     if lead.state == LeadState.novo:
-        # Auto-promote if any field filled
+        # Auto-promote if any field filled or score > 0
         has_any_field = (
             lead.name
             or lead.service_interest
             or lead.complaint
             or lead.budget_range.value != "nao_informado"
             or lead.urgency.value != "nao_informada"
+            or lead.score > 0
         )
         if has_any_field:
             trans = can_transition(lead.state, LeadState.em_qualificacao)
@@ -111,8 +106,9 @@ def auto_transition(lead: Lead) -> StateTransition | None:
                 return trans
 
     if lead.state == LeadState.em_qualificacao:
-        # Auto-promote if all 5 complete
-        if all_fields_complete:
+        # v3: promote to qualificado when score reaches 80+
+        # (contextual scoring already accounts for per-niche fields)
+        if lead.score >= 80:
             trans = can_transition(lead.state, LeadState.qualificado)
             if trans.allowed:
                 return trans

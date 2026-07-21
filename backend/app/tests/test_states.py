@@ -45,24 +45,24 @@ def test_auto_transition_novo_with_any_field():
     assert trans.to_state == LeadState.em_qualificacao
 
 
-def test_auto_transition_qualificacao_with_all_fields():
-    """em_qualificacao + all 5 fields → auto-promote to qualificado."""
+def test_auto_transition_qualificacao_with_high_score():
+    """em_qualificacao + score >= 80 → auto-promote to qualificado (v3 contextual)."""
     lead = Lead(
         session_id="dummy",
         state=LeadState.em_qualificacao,
         name="João",
         service_interest="melasma",
-        complaint="manchas",
-        budget_range=BudgetRange.ate_3k,
-        urgency=Urgency.alta,
+        budget_range=BudgetRange.nao_informado,
+        urgency=Urgency.nao_informada,
+        score=85,  # v3: score is the authority, not field count
     )
     trans = auto_transition(lead)
     assert trans is not None
     assert trans.to_state == LeadState.qualificado
 
 
-def test_auto_transition_no_promotion_if_incomplete():
-    """em_qualificacao + 4 fields → no auto-transition."""
+def test_auto_transition_no_promotion_if_low_score():
+    """em_qualificacao + score < 80 → no auto-transition (v3)."""
     lead = Lead(
         session_id="dummy",
         state=LeadState.em_qualificacao,
@@ -70,8 +70,8 @@ def test_auto_transition_no_promotion_if_incomplete():
         service_interest="melasma",
         complaint="manchas",
         budget_range=BudgetRange.ate_3k,
-        # urgency missing
         urgency=Urgency.nao_informada,
+        score=50,  # below threshold
     )
     trans = auto_transition(lead)
-    assert trans is None  # no transition
+    assert trans is None  # no transition until score >= 80

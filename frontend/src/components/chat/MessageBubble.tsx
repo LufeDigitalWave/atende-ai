@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown';
 import type { Message } from '../../lib/store';
 
 interface MessageBubbleProps {
@@ -27,7 +28,11 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className="flex flex-col max-w-[75%]">
         <div className={isUser ? 'chat-bubble-user' : 'chat-bubble-agent'}>
-          {message.content || (
+          {message.content ? (
+            <div className="prose prose-sm prose-gray max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ul]:pl-4 [&>ol]:pl-4 [&>li]:mb-1">
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
+          ) : (
             <span className="text-gray-400 italic">...</span>
           )}
         </div>
