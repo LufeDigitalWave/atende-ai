@@ -43,7 +43,7 @@ export default function ChatInput({ onSend, disabled, placeholder }: ChatInputPr
         disabled={disabled}
         placeholder={placeholder || 'Digite sua mensagem...'}
         maxLength={500}
-        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-full outline-none focus:border-sofia-500 focus:ring-1 focus:ring-sofia-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+        className="flex-1 px-3 py-2 text-sm bg-white text-gray-900 border border-gray-200 rounded-full outline-none focus:border-sofia-500 focus:ring-1 focus:ring-sofia-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
         aria-label="Mensagem"
       />
       <button
