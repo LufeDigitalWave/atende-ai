@@ -1,27 +1,76 @@
 # Atende AI
 
-> Demo pública de um agente SDR de IA qualificando leads — com mini-CRM ao vivo.
->
-> Visite a demo, converse com a **Sofia** (SDR fictícia da **Clínica Renova**) e veja o card do lead preenchendo sozinho do lado direito.
+**Agente SDR de IA que qualifica leads em tempo real — com CRM ao vivo.**
 
-**English Summary**: Public portfolio demo showing a real AI SDR agent qualifying leads in real time, with a live mini-CRM that updates as the conversation happens. Single command to run (`docker compose up`). The agent runs against the real Claude API by default (`claude-haiku-4-5` for cost), with a scripted `FakeLLMProvider` fallback so the whole demo works offline.
+[![CI](https://github.com/LufeDigitalWave/atende-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LufeDigitalWave/atende-ai/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-<!-- Demo GIF: gere com as instruções em docs/screenshots/README.md -->
-<!-- ![demo preview](docs/demo.gif) -->
-
-> 📸 **Demo visual em breve.** Instruções de captura em [`docs/screenshots/README.md`](docs/screenshots/README.md).
+`FastAPI` · `React` · `Claude/OpenAI` · `pgvector` · `SSE` · `Docker`
 
 ---
 
-## O que esta demo mostra
+### 🎯 O que é
 
-1. **Agente SDR real** (Claude API) com prompt versionado, RAG sobre base de conhecimento fictícia, extração estruturada paralela e regras de guardrail (não inventa preço, não negocia, redireciona fora de escopo).
-2. **Mini-CRM ao vivo** atualizado por Server-Sent Events: dados do lead, score explicável, funil e timeline aparecem em <1s após cada turno.
-3. **Guarda-corpos de custo** completos: cap por sessão, rate limit, budget diário, truncagem de histórico, limite de input, TTL de 24h e reset noturno.
-4. **Admin** com transcript, kanban de leads, dashboard de custo e versão do agente.
-5. **Pronto pra Easypanel/Traefik** com `docker-compose.yml`.
+Uma demo pública que mostra um agente SDR de IA conversando com visitantes, extraindo dados estruturados e qualificando leads em tempo real — tudo visível num mini-CRM ao lado.
 
-> Todos os dados (empresa, serviços, agenda, vendedores) são **100% fictícios**. A IA é a única parte real.
+**30+ nichos** suportados. Escolha seu ramo (restaurante, clínica, imobiliária, advocacia...) e veja a IA se adaptar instantaneamente.
+
+### ⚡ Teste em 60 segundos
+
+```bash
+git clone https://github.com/<ORG>/atende-ai.git
+cd atende-ai
+cp .env.example .env
+docker compose up
+```
+
+Abra **http://localhost:5173**, escolha um nicho, envie "oi" e observe:
+- O agente responde em streaming (token por token)
+- O CRM ao lado preenche nome, interesse, score
+- O funil avança de "Novo" → "Qualificando" → "Qualificado"
+- Após 4 mensagens, aparece o CTA de conversão
+
+> 💡 Funciona 100% offline com `FakeLLMProvider`. Com API key, usa LLM real.
+
+---
+
+### 🏗️ Arquitetura (3 Layers)
+
+```
+Layer 1: Factory (gpt-4.1-mini) → gera perfil da empresa fictícia por nicho
+Layer 2: Renderer (determinístico) → preenche template de prompt fixo
+Layer 3: Runtime (Claude/OpenAI SSE) → chat + extração + scoring + FSM
+```
+
+**Diferencial:** adicionar um nicho = zero código. A Factory gera dados; o template é fixo.
+
+### 🛡️ 7 Guardrails de custo
+
+| # | Guardrail | Config |
+|---|-----------|--------|
+| 1 | Cap por sessão | 30 msgs max |
+| 2 | Rate limit | 2s entre msgs + 50 sessions/IP/h |
+| 3 | Budget diário | 200k tokens (alerting webhook) |
+| 4 | Input max | 500 chars |
+| 5 | Session TTL | 24h (soft delete) |
+| 6 | Kill switch | Admin toggle sem restart |
+| 7 | Reset noturno | Cron container (soft delete + reseed) |
+
+### 📊 O que a demo mostra
+
+- **Chat SSE** com streaming real (typing indicator, markdown render)
+- **CRM ao vivo** (lead profile, score explicável, funil, timeline)
+- **Admin** com JWT auth, kanban de leads, dashboard de custos
+- **30+ nichos** gerados dinamicamente (factory v3)
+- **Scoring contextual** por nicho (restaurante pontua por reserva, B2B por urgência)
+- **Handoff automático** quando lead está qualificado
+
+### 🧪 Qualidade
+
+- **124 testes** (backend pytest + vitest frontend)
+- **CI** GitHub Actions (ruff + pytest + build + vitest)
+- **Segurança:** SQL injection fix, security headers, PII sanitizer, fail-fast secrets
+- **Docs:** EVALUATION.md com 21 cenários, CONVERSATION_DESIGN.md, 3 ADRs
 
 ---
 
@@ -35,74 +84,50 @@ docker compose up
 ```
 
 Acesse:
-- Demo pública: <http://localhost:5173>
-- API: <http://localhost:8000>
-- Admin: <http://localhost:5173/admin> (login com `ADMIN_USERNAME` / `ADMIN_PASSWORD` do `.env`)
+- Demo: http://localhost:5173
+- Admin: http://localhost:5173/admin (credenciais no `.env`)
+- API: http://localhost:8000/api/health
 
-### Modo real (Claude API)
+### Modo real (com LLM)
 
-Edite o `.env`:
-
-```env
-LLM_PROVIDER=claude
-ANTHROPIC_API_KEY=sk-ant-...
-AGENT_MODEL=claude-haiku-4-5
-```
-
-Reinicie `docker compose up`. O agent agora usa a API real da Anthropic com prompt caching no system prompt.
-
----
-
-## Estrutura
-
-```
-atende-ai/
-├── README.md                # este arquivo
-├── CLAUDE.md                # convenções do projeto, versionamento de prompt, testes
-├── PROPOSTA_SNIPPET.md      # 2 versões de proposta comercial
-├── docker-compose.yml
-├── .env.example
-├── docs/
-│   ├── ARCHITECTURE.md      # mermaid: chat → agent loop → SSE → CRM
-│   ├── AGENT_PROMPT.md      # anatomia do prompt + changelog
-│   ├── DEMO.md ⭐           # roteiro de call + objeções
-│   ├── API.md               # endpoints + eventos SSE
-│   ├── DEPLOY.md            # Easypanel + Traefik + env
-│   └── COST_MODEL.md        # estimativa por conversa e por dia
-├── backend/
-│   └── app/
-│       ├── agent/           # Sofia prompt + loop + extraction + score
-│       ├── api/             # FastAPI routes
-│       ├── services/        # LLMProvider, retriever, budget
-│       ├── models/          # SQLAlchemy models
-│       ├── schemas/         # Pydantic
-│       ├── seeds/           # knowledge base fictícia
-│       └── tests/
-└── frontend/
-    └── src/
-        ├── pages/           # / /admin /como-funciona
-        ├── components/chat/ # chat UI
-        ├── components/crm/  # live CRM
-        ├── hooks/
-        └── lib/
+```bash
+cp .env.example .env
+# Edite .env: LLM_PROVIDER=openai, OPENAI_API_KEY=sk-...
+docker compose up
 ```
 
 ---
 
-## Critérios de aceite
+## Stack
 
-- `docker compose up` com `LLM_PROVIDER=fake` roda 100% offline e completa o funil com o CRM atualizando.
-- Com `LLM_PROVIDER=claude`, a Sofia conversa natural em PT-BR, extrai campos e nunca inventa preço fora do RAG.
-- Streaming visível + updates do CRM em <1s.
-- 7 guarda-corpos de custo implementados e testados.
-- pytest ≥ 12 testes verdes.
-- UI impecável em 375px e 1440px; sem trade dress de WhatsApp.
-- Zero credenciais no repo.
+| Camada | Tecnologia |
+|--------|------------|
+| Backend | FastAPI + SQLAlchemy async + Alembic |
+| Frontend | React 18 + Vite + Tailwind + React Router |
+| DB | PostgreSQL 16 + pgvector (HNSW) |
+| LLM | Claude Haiku 4.5 / OpenAI gpt-4o-mini |
+| Infra | Docker Compose + EasyPanel + Traefik |
+| CI | GitHub Actions |
 
-Veja o checklist completo em `CLAUDE.md`.
+---
+
+## Documentação
+
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — diagrama completo + fluxo
+- [AGENT_PROMPT.md](docs/AGENT_PROMPT.md) — anatomia do prompt v3 (3 layers)
+- [EVALUATION.md](docs/EVALUATION.md) — 21 cenários de teste + rubrica
+- [CONVERSATION_DESIGN.md](docs/CONVERSATION_DESIGN.md) — princípios de conversa
+- [DEMO.md](docs/DEMO.md) — roteiro de call comercial
+- [COST_MODEL.md](docs/COST_MODEL.md) — estimativa de custo por conversa
+- [API.md](docs/API.md) — endpoints + eventos SSE
+- [DEPLOY.md](docs/DEPLOY.md) — deploy completo
 
 ---
 
 ## Licença
 
-MIT.
+[MIT](LICENSE) — © 2026 Luiz Felipe
+
+---
+
+> Todos os dados (empresa, serviços, agenda, vendedores) são **100% fictícios**. A IA é a única parte real.
