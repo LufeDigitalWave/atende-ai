@@ -4,9 +4,8 @@ Runs at 03:00 local time each day.
 Soft-deletes sessions (sets deleted_at) instead of hard DELETE since Sprint 5.
 """
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-import structlog
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,8 +24,8 @@ async def cleanup_old_sessions(session: AsyncSession, ttl_hours: int = 24) -> in
 
     Returns: number of sessions soft-deleted
     """
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=ttl_hours)
-    now = datetime.now(timezone.utc)
+    cutoff = datetime.now(UTC) - timedelta(hours=ttl_hours)
+    now = datetime.now(UTC)
     stmt = (
         update(Session)
         .where(Session.last_activity_at < cutoff, Session.deleted_at.is_(None))

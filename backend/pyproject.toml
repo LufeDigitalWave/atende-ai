@@ -48,7 +48,11 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
-ignore = ["E501"]
+ignore = ["E501", "B008", "B007", "UP042", "E402"]  # B008: FastAPI Depends; B007: loop vars for SSE tuple; UP042: str+Enum is SQLAlchemy pattern; E402: FastAPI main imports after app
+
+[tool.ruff.lint.per-file-ignores]
+"alembic/**/*.py" = ["F841"]  # Alembic CREATE TYPE assigns to unused vars (side-effect)
+"app/tests/**/*.py" = ["F841", "E741"]  # Test fixtures may assign unused; lambda vars
 
 [tool.coverage.run]
 source = ["app"]

@@ -4,7 +4,7 @@ Daily token budget cap with usage logging per call.
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import and_, func, select
@@ -89,9 +89,9 @@ async def get_daily_usage(
         target_date = date.today()
 
     # Query usage_log for today
-    start = datetime.combine(target_date, datetime.min.time(), tzinfo=timezone.utc)
+    start = datetime.combine(target_date, datetime.min.time(), tzinfo=UTC)
     end = datetime.combine(
-        target_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc
+        target_date + timedelta(days=1), datetime.min.time(), tzinfo=UTC
     )
 
     stmt = select(
@@ -106,7 +106,6 @@ async def get_daily_usage(
 
     total_input = row.total_input or 0
     total_output = row.total_output or 0
-    total_cached = row.total_cached or 0
     total_cost = row.total_cost or Decimal("0")
 
     # Re-compute total tokens (input + output, not cached)
@@ -122,9 +121,9 @@ async def get_daily_usage_detailed(
     if target_date is None:
         target_date = date.today()
 
-    start = datetime.combine(target_date, datetime.min.time(), tzinfo=timezone.utc)
+    start = datetime.combine(target_date, datetime.min.time(), tzinfo=UTC)
     end = datetime.combine(
-        target_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc
+        target_date + timedelta(days=1), datetime.min.time(), tzinfo=UTC
     )
 
     stmt = select(

@@ -1,20 +1,19 @@
 """Tests for Factory v3 (BusinessProfile + ConversationProfile pipeline)."""
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
 
 from app.schemas.business_profile import BusinessProfile
 from app.schemas.conversation_profile import (
-    ConversationJourney,
     ConversationProfile,
-    QualificationField,
 )
 from app.schemas.niche_profile import NicheProfile
 from app.services.prompt_factory_v3 import (
-    sanitize_niche,
+    FALLBACK_PROFILE,
+    clear_cache,
     generate_niche_profile,
     get_cached_profile,
-    clear_cache,
-    FALLBACK_PROFILE,
+    sanitize_niche,
 )
 
 

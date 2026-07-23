@@ -14,12 +14,9 @@ Fallback to legacy scoring if no profile provided (for backward compat).
 """
 from __future__ import annotations
 
-from typing import Any
-
 from app.schemas.conversation_profile import ConversationProfile
 from app.schemas.lead_extraction import ExtractedLeadData
 from app.schemas.niche_profile import NicheProfile
-from app.services.lead_extractor import ExtractedField
 
 
 class ScoreBreakdown:

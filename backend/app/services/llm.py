@@ -3,8 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from decimal import Decimal
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import openai
 from anthropic import AsyncAnthropic

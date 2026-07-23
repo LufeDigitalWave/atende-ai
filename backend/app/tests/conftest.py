@@ -1,7 +1,7 @@
 """pytest fixtures."""
 import asyncio
 import os
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -26,10 +26,9 @@ sqlite3.register_adapter(dict, lambda d: _json.dumps(d))
 sqlite3.register_adapter(list, lambda l: _json.dumps(l))
 sqlite3.register_adapter(_Decimal, lambda d: str(d))
 
-from app.core.config import get_settings  # noqa: E402
 from app.core.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Lead, Message, Session, SessionStatus  # noqa: E402
+from app.models import Lead, Session, SessionStatus  # noqa: E402
 from app.services import llm as llm_module  # noqa: E402
 
 
@@ -48,9 +47,8 @@ async def test_engine():
     Patches PostgreSQL-only types (JSONB, TSVECTOR, Vector, UUID) to their
     SQLite-compatible equivalents so the full schema can be created.
     """
-    from sqlalchemy import event, Text, String
-    from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
-    from sqlalchemy.types import TypeDecorator, UserDefinedType, TEXT
+    from sqlalchemy import String, Text, event
+    from sqlalchemy.types import UserDefinedType
 
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:?check_same_thread=False",
@@ -164,6 +162,7 @@ async def seeded_admin(test_engine, client: AsyncClient) -> str:
     visible to subsequent admin requests.
     """
     from sqlalchemy import select
+
     from app.core.security import create_access_token, hash_password
     from app.models import AdminUser
 

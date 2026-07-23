@@ -1,5 +1,4 @@
 """Tests for Lead Scoring v3 (contextual by intent + journey)."""
-import pytest
 
 from app.schemas.business_profile import (
     BusinessProfile,
@@ -15,11 +14,11 @@ from app.schemas.conversation_profile import (
 from app.schemas.lead_extraction import ExtractedField, ExtractedLeadData
 from app.schemas.niche_profile import NicheProfile
 from app.services.lead_scoring_v3 import (
-    compute_score_v3,
-    compute_score_legacy,
     ScoreBreakdown,
-    _field_to_scoring_event,
     _default_points_for_field,
+    _field_to_scoring_event,
+    compute_score_legacy,
+    compute_score_v3,
 )
 
 

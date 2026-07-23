@@ -11,14 +11,12 @@ This is Layer 4 of the v3 architecture. It:
 from __future__ import annotations
 
 import json
-import structlog
-from typing import Any
 
 import openai
+import structlog
 from pydantic import ValidationError
 
 from app.core.config import get_settings
-from app.schemas.conversation_profile import ConversationProfile
 from app.schemas.lead_extraction import (
     ExtractedField,
     ExtractedLeadData,
@@ -213,8 +211,8 @@ async def _llm_extract(
 
     # Log extraction token usage (best-effort)
     try:
-        from app.services.budget import log_usage
         from app.core.database import get_session_factory
+        from app.services.budget import log_usage
 
         usage = response.usage
         if usage:

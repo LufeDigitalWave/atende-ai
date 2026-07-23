@@ -1,7 +1,8 @@
 """Tests for LLM-based Lead Extractor (Phase 4 of v3 evolution)."""
 import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from app.schemas.business_profile import (
     BusinessProfile,
@@ -16,9 +17,9 @@ from app.schemas.conversation_profile import (
 )
 from app.schemas.niche_profile import NicheProfile
 from app.services.lead_extractor import (
-    extract_lead_data,
-    _heuristic_fallback,
     _build_extraction_prompt,
+    _heuristic_fallback,
+    extract_lead_data,
 )
 
 

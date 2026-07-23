@@ -4,7 +4,7 @@ All routes require JWT auth.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import structlog
@@ -14,21 +14,25 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.database import get_db
-from app.core.security import create_access_token, decode_access_token, verify_password, hash_password
 from app.core.config import get_settings
-from app.models import AdminUser, Session, Lead, LeadState, UsageLog
+from app.core.database import get_db
+from app.core.security import (
+    create_access_token,
+    decode_access_token,
+    verify_password,
+)
+from app.models import AdminUser, Lead, LeadState, Session
 from app.schemas.chat import (
-    AdminLoginRequest,
-    AdminLoginResponse,
-    AdminSessionSummary,
-    AdminSessionsList,
+    AdminAgentInfo,
+    AdminCostsBudget,
     AdminCostsResponse,
     AdminCostsToday,
-    AdminCostsBudget,
-    AdminAgentInfo,
+    AdminLoginRequest,
+    AdminLoginResponse,
+    AdminSessionsList,
+    AdminSessionSummary,
 )
-from app.services.budget import get_daily_usage, get_daily_usage_detailed
+from app.services.budget import get_daily_usage_detailed
 
 logger = structlog.get_logger("routes_admin")
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -64,7 +68,7 @@ async def get_current_admin(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="invalid token subject",
-        )
+        ) from None
 
     user = await db.scalar(select(AdminUser).where(AdminUser.id == user_id))
     if not user or not user.is_active:
@@ -106,7 +110,7 @@ async def admin_login(
 
     # Create token
     token = create_access_token(str(user.id))
-    expires_at = datetime.now(timezone.utc) + timedelta(
+    expires_at = datetime.now(UTC) + timedelta(
         hours=settings.jwt_expires_hours
     )
 
@@ -228,7 +232,8 @@ async def get_costs(
     )
 
     # History (last N days)
-    from datetime import date as date_type, timedelta as td
+    from datetime import date as date_type
+    from datetime import timedelta as td
     history = []
     for i in range(1, days + 1):
         d = date_type.today() - td(days=i)
@@ -298,7 +303,7 @@ async def set_killswitch(
 
     Body: {"component": "chat"|"handoff", "enabled": true|false}
     """
-    from app.services.killswitch import set_override, get_state
+    from app.services.killswitch import get_state, set_override
 
     component = body.get("component")
     enabled = body.get("enabled")

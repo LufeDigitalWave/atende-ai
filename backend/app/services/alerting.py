@@ -5,7 +5,7 @@ Cooldown prevents duplicate alerts within a configurable window.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import structlog
@@ -24,13 +24,13 @@ def _recently_alerted(threshold: int) -> bool:
     last_sent = _alert_cooldown.get(threshold)
     if not last_sent:
         return False
-    elapsed_hours = (datetime.now(timezone.utc) - last_sent).total_seconds() / 3600
+    elapsed_hours = (datetime.now(UTC) - last_sent).total_seconds() / 3600
     return elapsed_hours < settings.budget_alert_cooldown_hours
 
 
 def _record_alert(threshold: int) -> None:
     """Record that we sent an alert for this threshold."""
-    _alert_cooldown[threshold] = datetime.now(timezone.utc)
+    _alert_cooldown[threshold] = datetime.now(UTC)
 
 
 async def _send_webhook(msg: str, pct: float, used: int, budget: int) -> None:
@@ -48,7 +48,7 @@ async def _send_webhook(msg: str, pct: float, used: int, budget: int) -> None:
                     "pct": pct,
                     "used_tokens": used,
                     "budget_tokens": budget,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
         logger.info(f"budget alert sent to webhook: {pct}%")

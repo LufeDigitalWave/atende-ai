@@ -6,8 +6,7 @@ import asyncio
 import hashlib
 from pathlib import Path
 
-import structlog
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings

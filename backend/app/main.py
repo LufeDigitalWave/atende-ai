@@ -8,13 +8,12 @@ Wiring:
 """
 from __future__ import annotations
 
-import structlog
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import get_settings
-from app.core.database import dispose_engine, get_engine, get_session_factory
+from app.core.database import dispose_engine, get_engine
 from app.core.logging import configure_logging, get_logger
 
 configure_logging()
@@ -103,7 +102,9 @@ async def shutdown_event() -> None:
 
 
 # Routes
-from app.api import routes_chat, routes_admin
+from datetime import UTC
+
+from app.api import routes_admin, routes_chat
 
 app.include_router(routes_chat.router)
 app.include_router(routes_admin.router)
@@ -112,11 +113,11 @@ app.include_router(routes_admin.router)
 @app.get("/api/health")
 async def health_check():
     """Simple health check."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     return {
         "status": "ok",
         "environment": settings.environment,
         "provider": settings.llm_provider,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }

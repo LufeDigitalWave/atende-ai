@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from app.core.config import get_settings
 
-
 # In-memory override cache: {component_name: enabled_bool}
 _overrides: dict[str, bool] = {}
 

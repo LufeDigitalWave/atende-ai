@@ -27,7 +27,7 @@ class NicheProfile:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "NicheProfile":
+    def from_dict(cls, data: dict) -> NicheProfile:
         return cls(
             business=BusinessProfile(**data["business"]),
             conversation=ConversationProfile(**data["conversation"]),

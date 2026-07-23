@@ -4,10 +4,10 @@ Revision ID: 0002
 Revises: 0001
 Create Date: 2026-07-20
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 
+from alembic import op
 
 # revision identifiers
 revision = "0002"

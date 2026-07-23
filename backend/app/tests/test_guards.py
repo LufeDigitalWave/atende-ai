@@ -1,8 +1,6 @@
 """Test guardrails — budget, rate limit, caps."""
-import pytest
 from uuid import uuid4
 
-from app.services.budget import get_daily_usage
 from app.services.rate_limit import RateLimiter
 
 

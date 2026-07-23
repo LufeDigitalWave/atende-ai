@@ -11,7 +11,6 @@ from app.models.lead import BudgetRange, LeadState, Urgency
 from app.models.session import SessionStatus
 from app.schemas.common import BaseSchema
 
-
 # --- Sessions ---
 
 class SessionCreateResponse(BaseSchema):

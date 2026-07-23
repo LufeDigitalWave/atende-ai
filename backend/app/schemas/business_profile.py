@@ -6,7 +6,6 @@ The agent template is rendered FROM this data — the LLM never writes instructi
 from __future__ import annotations
 
 import re
-from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 

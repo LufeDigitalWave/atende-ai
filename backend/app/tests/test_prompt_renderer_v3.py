@@ -1,5 +1,4 @@
 """Tests for Prompt Renderer v3 (Layer 2 of v3 architecture)."""
-import pytest
 
 from app.schemas.business_profile import (
     BusinessProfile,
@@ -15,14 +14,14 @@ from app.schemas.conversation_profile import (
 from app.schemas.niche_profile import NicheProfile
 from app.services.prompt_factory_v3 import FALLBACK_PROFILE
 from app.services.prompt_renderer_v3 import (
-    render_prompt,
-    _render_services,
     _render_faq,
-    _render_journeys,
-    _render_qualification_fields,
-    _render_prohibited_behaviors,
-    _render_objections,
     _render_handoff_rules,
+    _render_journeys,
+    _render_objections,
+    _render_prohibited_behaviors,
+    _render_qualification_fields,
+    _render_services,
+    render_prompt,
 )
 
 

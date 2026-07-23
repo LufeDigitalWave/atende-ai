@@ -12,7 +12,6 @@ import structlog
 
 from app.core.config import get_settings
 
-
 # PII patterns to scrub in production logs
 _PII_PATTERNS = [
     (re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b"), "[EMAIL]"),

@@ -1,5 +1,4 @@
 """Test FSM state transitions."""
-import pytest
 
 from app.agent.states import auto_transition, can_transition
 from app.models import BudgetRange, Lead, LeadState, Urgency

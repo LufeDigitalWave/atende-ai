@@ -9,27 +9,27 @@ Endpoints:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.ip_hash import get_client_ip, hash_ip
-from app.core.config import get_settings
-from app.models import Lead, Session, SessionStatus, Message, MessageRole
+from app.models import Lead, Message, MessageRole, Session, SessionStatus
 from app.schemas.chat import (
-    MessageCreate,
-    SessionDetailResponse,
-    MessageOut,
     LeadOut,
+    MessageCreate,
+    MessageOut,
+    SessionDetailResponse,
 )
 from app.schemas.common import BaseSchema
-from app.services.budget import check_budget, log_usage
 from app.services.alerting import check_budget_and_alert
+from app.services.budget import check_budget, log_usage
 from app.services.rate_limit import get_rate_limiter
 
 logger = structlog.get_logger("routes_chat")
@@ -45,7 +45,7 @@ def _build_cumulative_extraction(lead, current_extraction, niche_profile):
 
     This ensures scoring reflects ALL data collected so far, not just this turn.
     """
-    from app.schemas.lead_extraction import ExtractedLeadData, ExtractedField
+    from app.schemas.lead_extraction import ExtractedField, ExtractedLeadData
 
     # Start with fields from the current extraction
     fields_by_key = {ef.key: ef for ef in current_extraction.extracted_fields if ef.value is not None}
@@ -182,7 +182,7 @@ async def get_session(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="invalid session_id format",
-        )
+        ) from None
 
     # Query with eager loading (exclude soft-deleted)
     stmt = (
@@ -267,7 +267,7 @@ async def send_message(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="invalid session_id format",
-        )
+        ) from None
 
     # Fetch session (exclude soft-deleted)
     session = await db.scalar(select(Session).where(Session.id == sid, Session.deleted_at.is_(None)))
@@ -331,23 +331,24 @@ async def send_message(
     )
     db.add(user_msg)
     session.message_count += 1
-    session.last_activity_at = datetime.now(timezone.utc)
+    session.last_activity_at = datetime.now(UTC)
     await db.commit()
 
     logger.info(f"message sent to session {session.id}")
 
     # Run agent loop and stream response as SSE
-    from fastapi.responses import StreamingResponse
-    from app.agent.states import auto_transition
-    from app.models import Lead, LeadState, LeadEvent, LeadEventType, BudgetRange, Urgency
-    from app.services.llm import get_llm_provider
-    from app.services.lead_extractor import extract_lead_data
-    from app.services.lead_scoring_v3 import compute_score_v3
-    from app.services.prompt_factory_v3 import get_cached_profile, generate_niche_profile
-    from app.services.prompt_renderer_v3 import render_prompt
-    from pathlib import Path
     import json
     import time
+
+    from fastapi.responses import StreamingResponse
+
+    from app.agent.states import auto_transition
+    from app.models import Lead, LeadState
+    from app.services.lead_extractor import extract_lead_data
+    from app.services.lead_scoring_v3 import compute_score_v3
+    from app.services.llm import get_llm_provider
+    from app.services.prompt_factory_v3 import generate_niche_profile, get_cached_profile
+    from app.services.prompt_renderer_v3 import render_prompt
 
     async def generate_sse():
         """SSE generator — runs agent loop and yields events."""
@@ -455,16 +456,12 @@ async def send_message(
 
         # Apply extraction to legacy lead columns (backward compat with frontend SSE)
         legacy_fields = extraction.to_legacy_dict()
-        changed = False
         if legacy_fields.get("name") and not lead.name:
             lead.name = legacy_fields["name"]
-            changed = True
         if legacy_fields.get("service_interest") and not lead.service_interest:
             lead.service_interest = legacy_fields["service_interest"]
-            changed = True
         if legacy_fields.get("complaint") and not lead.complaint:
             lead.complaint = legacy_fields["complaint"]
-            changed = True
 
         # Emit only NON-NULL fields that represent new information
         all_fields = {ef.key: ef.value for ef in extraction.extracted_fields if ef.value is not None}
@@ -473,12 +470,10 @@ async def send_message(
             if v is not None:
                 all_fields[k] = v
         if all_fields:
-            changed = True
             yield f"event: lead_update\ndata: {json.dumps({'fields': all_fields})}\n\n"
 
         # Score (v3 — contextual by intent, CUMULATIVE across turns)
         # Build cumulative extraction: combine lead's existing extracted fields with this turn's new ones
-        from app.schemas.lead_extraction import ExtractedLeadData, ExtractedField
 
         # Get previously extracted fields from lead.extracted_data (JSONB)
         # For now, reconstruct from legacy columns + score_breakdown
@@ -536,7 +531,7 @@ async def stream_events(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="invalid session_id format",
-        )
+        ) from None
 
     # Verify session exists
     session = await db.scalar(select(Session).where(Session.id == sid))

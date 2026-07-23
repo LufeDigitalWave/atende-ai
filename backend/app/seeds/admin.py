@@ -4,8 +4,7 @@ Usage: python -m app.seeds.admin
 """
 import asyncio
 
-import structlog
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings

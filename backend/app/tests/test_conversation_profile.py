@@ -3,7 +3,6 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.conversation_profile import (
-    BusinessMode,
     ConversationJourney,
     ConversationProfile,
     QualificationField,
