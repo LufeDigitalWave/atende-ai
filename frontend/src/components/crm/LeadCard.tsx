@@ -26,7 +26,7 @@ export default function LeadCard({ crmFields = [] }: LeadCardProps) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
       <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-        <span>👤 Lead Profile</span>
+        <span>Lead Profile</span>
         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
           {lead.state.replace(/_/g, ' ')}
         </span>

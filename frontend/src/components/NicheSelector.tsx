@@ -1,14 +1,15 @@
 import { useState } from 'react';
+import { Sparkles, PawPrint, Home, Scale, UtensilsCrossed, Dumbbell, Monitor, Globe } from 'lucide-react';
 
 const NICHES = [
-  { id: 'clinica_estetica', label: 'Clínica de Estética', emoji: '💆' },
-  { id: 'pet_shop', label: 'Pet Shop / Veterinária', emoji: '🐾' },
-  { id: 'imobiliaria', label: 'Imobiliária', emoji: '🏠' },
-  { id: 'advocacia', label: 'Advocacia', emoji: '⚖️' },
-  { id: 'restaurante', label: 'Restaurante', emoji: '🍽️' },
-  { id: 'academia', label: 'Academia', emoji: '💪' },
-  { id: 'saas', label: 'SaaS / Tecnologia', emoji: '💻' },
-  { id: 'escola_idiomas', label: 'Escola de Idiomas', emoji: '🌍' },
+  { id: 'clinica_estetica', label: 'Clínica de Estética', icon: Sparkles },
+  { id: 'pet_shop', label: 'Pet Shop / Veterinária', icon: PawPrint },
+  { id: 'imobiliaria', label: 'Imobiliária', icon: Home },
+  { id: 'advocacia', label: 'Advocacia', icon: Scale },
+  { id: 'restaurante', label: 'Restaurante', icon: UtensilsCrossed },
+  { id: 'academia', label: 'Academia', icon: Dumbbell },
+  { id: 'saas', label: 'SaaS / Tecnologia', icon: Monitor },
+  { id: 'escola_idiomas', label: 'Escola de Idiomas', icon: Globe },
 ];
 
 interface NicheSelectorProps {
@@ -75,9 +76,7 @@ export default function NicheSelector({ onSelect, loading }: NicheSelectorProps)
               onClick={() => onSelect(niche.label)}
               className="flex flex-col items-center gap-3 p-5 rounded-xl bg-dark-surface border border-dark-border hover:border-brand-violet hover:shadow-lg hover:shadow-brand-violet/20 hover:-translate-y-0.5 transition-all cursor-pointer group"
             >
-              <span className="text-3xl group-hover:scale-110 transition-transform">
-                {niche.emoji}
-              </span>
+              <niche.icon className="w-7 h-7 text-brand-violet group-hover:text-brand-cyan group-hover:scale-110 transition-all" />
               <span className="text-xs font-medium text-gray-200 text-center">
                 {niche.label}
               </span>

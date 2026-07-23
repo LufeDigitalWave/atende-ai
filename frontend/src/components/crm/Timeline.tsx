@@ -9,7 +9,7 @@ export default function Timeline() {
   if (events.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">📋 Timeline</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Timeline</h3>
         <p className="text-xs text-gray-400 italic">Eventos aparecerão aqui...</p>
       </div>
     );
@@ -17,7 +17,7 @@ export default function Timeline() {
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">📋 Timeline</h3>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3">Timeline</h3>
       <div className="space-y-2 max-h-60 overflow-y-auto">
         {events.map((event) => (
           <TimelineItem key={event.id} event={event} />
@@ -51,16 +51,16 @@ function TimelineItem({ event }: { event: LeadEvent }) {
 
 function formatEventType(type: string): string {
   const map: Record<string, string> = {
-    session_started: '🟢 Sessão iniciada',
-    field_extracted: '📝 Campo extraído',
-    score_updated: '📊 Score atualizado',
-    state_changed: '🔄 Estado alterado',
-    handoff_triggered: '🤝 Handoff acionado',
-    slot_offered: '📅 Horários oferecidos',
-    slot_picked: '✅ Horário escolhido',
-    human_requested: '🙋 Humano solicitado',
-    out_of_scope: '⚠️ Fora de escopo',
-    session_capped: '🔒 Sessão encerrada',
+    session_started: 'Sessão iniciada',
+    field_extracted: 'Campo extraído',
+    score_updated: 'Score atualizado',
+    state_changed: 'Estado alterado',
+    handoff_triggered: 'Handoff acionado',
+    slot_offered: 'Horários oferecidos',
+    slot_picked: 'Horário escolhido',
+    human_requested: 'Humano solicitado',
+    out_of_scope: 'Fora de escopo',
+    session_capped: 'Sessão encerrada',
   };
   return map[type] || type;
 }

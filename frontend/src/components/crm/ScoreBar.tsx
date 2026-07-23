@@ -19,7 +19,7 @@ export default function ScoreBar() {
         className="flex items-center justify-between cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <h3 className="text-sm font-semibold text-gray-700">📊 Score</h3>
+        <h3 className="text-sm font-semibold text-gray-700">Score</h3>
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-sofia-600">{score}</span>
           <span className="text-xs text-gray-400">/100</span>

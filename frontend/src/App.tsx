@@ -119,7 +119,7 @@ function App() {
           {/* CRM ao vivo — abaixo em mobile, lateral em desktop */}
           <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 pt-3 lg:pt-0 lg:pl-4 flex flex-col max-h-60 lg:max-h-none overflow-auto">
             <div className="text-xs font-semibold text-gray-700 mb-4 uppercase tracking-wider">
-              📊 CRM ao vivo
+              CRM ao vivo
             </div>
             <div className="flex-1 overflow-auto">
               <CRMView crmFields={agentMeta.crmFields} />
