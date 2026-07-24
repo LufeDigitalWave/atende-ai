@@ -67,6 +67,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL:-https://${APP_DOMAIN:-atendeai.seudominio.com}}
+        VITE_CONTACT_URL: ${VITE_CONTACT_URL:-${CONTACT_URL:-https://wa.me/5511999999999}}
     container_name: atende_web
     restart: unless-stopped
     depends_on:
