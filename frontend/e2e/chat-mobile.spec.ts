@@ -27,7 +27,7 @@ test.describe('Mobile Layout', () => {
               { key: 'party_size', label: 'Pessoas', priority: 'high' },
             ],
             business_mode: 'reservation_based',
-            contact_url: 'https://wa.me/5511913289497',
+            contact_url: 'https://wa.me/5511999999999',
           }),
         });
       }
@@ -44,8 +44,8 @@ test.describe('Mobile Layout', () => {
   });
 
   test('NicheSelector grid is 2 columns on mobile', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByText('Atende AI')).toBeVisible();
+    await page.goto('/demo');
+    await expect(page.getByRole('heading', { name: 'Atende AI' })).toBeVisible();
 
     // Grid should have 2 columns (grid-cols-2) not 4
     const grid = page.locator('.grid');
@@ -53,9 +53,9 @@ test.describe('Mobile Layout', () => {
   });
 
   test('CRM is below chat (not sidebar) on mobile', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.getByText('Restaurante').click();
-    await expect(page.getByText('Lia')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Lia', exact: true })).toBeVisible({ timeout: 10000 });
 
     // On mobile (375px), the layout should be flex-col (stacked)
     // CRM should be below the chat, not hidden
@@ -78,9 +78,9 @@ test.describe('Mobile Layout', () => {
   });
 
   test('send button is large enough for touch (>=44px)', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.getByText('Restaurante').click();
-    await expect(page.getByText('Lia')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Lia', exact: true })).toBeVisible({ timeout: 10000 });
 
     const sendBtn = page.getByLabel('Enviar mensagem');
     const box = await sendBtn.boundingBox();

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSessionStore } from '../../lib/store';
 import { sendMessage, ApiError } from '../../lib/api';
+import { buildWhatsAppContactUrl } from '../../lib/constants';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import QuickReplies from './QuickReplies';
@@ -30,6 +31,8 @@ const DEFAULT_SUGGESTIONS = [
   'Quanto custa tratar melasma?',
   'Vocês atendem sábado?',
 ];
+
+const CONTACT_MESSAGE = 'Vi a demo do Atende AI e quero saber mais';
 
 export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName = 'Clínica Renova', suggestions = DEFAULT_SUGGESTIONS, contactUrl = 'https://wa.me/5511999999999' }: ChatWindowProps) {
   const {
@@ -259,7 +262,7 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
             </p>
             <div className="flex gap-2 shrink-0">
               <a
-                href={`${contactUrl}?text=Vi%20a%20demo%20do%20Atende%20AI%20e%20quero%20saber%20mais`}
+                href={buildWhatsAppContactUrl(CONTACT_MESSAGE, contactUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-brand-violet to-brand-cyan text-white rounded-lg hover:opacity-90 transition-all"
@@ -294,7 +297,7 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
             </p>
             <div className="flex gap-2 justify-center flex-wrap">
               <a
-                href={`${contactUrl}?text=Vi%20a%20demo%20do%20Atende%20AI%20e%20quero%20saber%20mais`}
+                href={buildWhatsAppContactUrl(CONTACT_MESSAGE, contactUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-brand-violet to-brand-cyan text-white rounded-lg hover:opacity-90 transition-all shadow-md"

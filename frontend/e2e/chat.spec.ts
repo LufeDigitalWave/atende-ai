@@ -42,7 +42,7 @@ test.describe('Chat Flow', () => {
               { key: 'urgency', label: 'Urgência', priority: 'medium' },
             ],
             business_mode: 'appointment_based',
-            contact_url: 'https://wa.me/5511913289497',
+            contact_url: 'https://wa.me/5511999999999',
           }),
         });
       }
@@ -59,41 +59,41 @@ test.describe('Chat Flow', () => {
   });
 
   test('selects a niche and starts chat', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
 
     // NicheSelector should be visible
-    await expect(page.getByText('Atende AI')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Atende AI' })).toBeVisible();
 
     // Click on a niche
     await page.getByText('Clínica de Estética').click();
 
     // Chat should appear with agent name
-    await expect(page.getByText('Sofia')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Sofia', exact: true })).toBeVisible({ timeout: 10000 });
   });
 
   test('sends a message and receives SSE response', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.getByText('Clínica de Estética').click();
 
     // Wait for chat to load
-    await expect(page.getByText('Sofia')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Sofia', exact: true })).toBeVisible({ timeout: 10000 });
 
     // Type and send message
-    const input = page.getByLabel('Mensagem');
+    const input = page.getByRole('textbox', { name: 'Mensagem' });
     await input.fill('oi');
     await page.getByLabel('Enviar mensagem').click();
 
     // Agent response should appear (from mock SSE)
-    await expect(page.getByText('Clínica Renova')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Olá! Eu sou a Sofia, assistente da Clínica Renova.')).toBeVisible({ timeout: 5000 });
   });
 
   test('shows demo action panel after 4 user messages', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.getByText('Clínica de Estética').click();
-    await expect(page.getByText('Sofia')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Sofia', exact: true })).toBeVisible({ timeout: 10000 });
 
     // Send 4 messages
-    const input = page.getByLabel('Mensagem');
+    const input = page.getByRole('textbox', { name: 'Mensagem' });
     for (const msg of ['oi', 'quero saber', 'quanto custa', 'meu nome é Luiz']) {
       await input.fill(msg);
       await page.getByLabel('Enviar mensagem').click();
@@ -105,9 +105,9 @@ test.describe('Chat Flow', () => {
   });
 
   test('suggestions are clickable', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/demo');
     await page.getByText('Clínica de Estética').click();
-    await expect(page.getByText('Sofia')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Sofia', exact: true })).toBeVisible({ timeout: 10000 });
 
     // Quick reply suggestions should be visible
     const suggestion = page.getByText('Quero saber sobre melasma');

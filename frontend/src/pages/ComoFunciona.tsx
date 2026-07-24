@@ -1,170 +1,149 @@
-/**
- * Página /como-funciona — explicação de 1 tela para o cliente leigo.
- */
+import { ArrowRight, Bot, CalendarCheck, Database, MessageCircle, MonitorCheck, UserRoundCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import CTASection from '../components/marketing/CTASection';
+import SiteHeader from '../components/marketing/SiteHeader';
+
+const steps = [
+  { icon: MessageCircle, title: 'WhatsApp', desc: 'Lead manda mensagem no canal oficial da empresa.' },
+  { icon: Bot, title: 'Agente IA', desc: 'Entende intenção, responde e conduz uma pergunta por vez.' },
+  { icon: MonitorCheck, title: 'CRM', desc: 'Dados, score, estado e histórico aparecem para o time humano.' },
+];
+
+const productionBlocks = [
+  { icon: Database, title: 'Base RAG', desc: 'Preços, FAQ, políticas e documentos da empresa entram como fonte autorizada.' },
+  { icon: CalendarCheck, title: 'Agenda', desc: 'Quando o fluxo pede horário, o agente consulta ou registra em agenda real.' },
+  { icon: UserRoundCheck, title: 'Handoff', desc: 'Quando precisa de humano, o vendedor recebe contexto completo da conversa.' },
+];
+
+const comparisons = [
+  ['Chat web da demo', 'WhatsApp oficial via Meta Cloud API'],
+  ['CRM visual ao lado', 'CRM real como Kommo, HubSpot, Chatwoot ou planilha'],
+  ['Dados fictícios', 'Base da sua empresa com PDFs, planilhas e regras'],
+  ['Slots simulados', 'Agenda real como Google Calendar ou Cal.com'],
+  ['Fluxo SDR', 'SDR, suporte, agendamento, RAG, governo ou reativação'],
+];
+
+const faqs = [
+  {
+    q: 'A IA inventa coisas?',
+    a: 'A regra é responder com base autorizada. Preços, políticas e condições vêm de dados versionados. Quando a informação não existe, o agente encaminha para humano.',
+  },
+  {
+    q: 'Qual a diferença para chatbot comum?',
+    a: 'O agente entende intenção, usa ferramentas, consulta base de conhecimento, atualiza CRM e sabe quando parar para chamar uma pessoa.',
+  },
+  {
+    q: 'Quanto tempo para colocar no ar?',
+    a: 'Um piloto simples costuma caber em 7 a 10 dias. Integrações com CRM, agenda e templates Meta entram em uma segunda fase.',
+  },
+  {
+    q: 'Funciona com WhatsApp oficial?',
+    a: 'Sim. O modelo de produção usa WhatsApp Cloud API da Meta quando o cliente quer operação oficial e menor risco de bloqueio.',
+  },
+];
+
 export default function ComoFunciona() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-sofia-500 to-sofia-600 text-white px-6 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">Como funciona?</h1>
-        <p className="text-sm opacity-90 max-w-2xl mx-auto">
-          Entenda como o agente de IA qualifica leads 24/7 no WhatsApp da sua empresa.
-        </p>
-      </div>
-
-      {/* Diagram */}
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center text-center mb-12">
-          <Step
-            emoji="📱"
-            title="WhatsApp"
-            desc="Lead manda mensagem"
-          />
-          <Arrow />
-          <Step
-            emoji="🤖"
-            title="Agente IA"
-            desc="Qualifica + extrai dados"
-          />
-          <Arrow />
-          <Step
-            emoji="📊"
-            title="CRM"
-            desc="Lead score + funil + agendamento"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center text-center">
-          <Step
-            emoji="🗂️"
-            title="Base RAG"
-            desc="Preços, FAQ, serviços da empresa"
-          />
-          <Step
-            emoji="📅"
-            title="Agendamento"
-            desc="Propõe horários automáticos"
-          />
-          <Step
-            emoji="👤"
-            title="Vendedor"
-            desc="Recebe lead quente + handoff"
-          />
-        </div>
-      </div>
-
-      {/* Production vs Demo */}
-      <div className="bg-gray-50 px-6 py-12">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">
-            Em produção, o que muda?
-          </h2>
-          <div className="space-y-3">
-            <CompareRow
-              demo="Chat web (esta demo)"
-              prod="WhatsApp oficial via Meta Cloud API"
-            />
-            <CompareRow
-              demo="CRM visual ao lado"
-              prod="CRM real (HubSpot, Kommo, Chatwoot)"
-            />
-            <CompareRow
-              demo="Slots fictícios"
-              prod="Agenda real (Google Calendar, Cal.com)"
-            />
-            <CompareRow
-              demo="Base fictícia (Clínica Renova)"
-              prod="Base da SUA empresa (PDFs, docs, planilha de preços)"
-            />
-            <CompareRow
-              demo="Budget diário limitado"
-              prod="Sem limite — custo ~R$ 0,03/conversa"
-            />
+    <div className="min-h-screen bg-dark-bg text-white">
+      <SiteHeader />
+      <main>
+        <section className="px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-brand-cyan">Como funciona</p>
+            <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
+              Do WhatsApp ao CRM, sem perder contexto no caminho.
+            </h1>
+            <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-300">
+              A demo mostra o fluxo em uma interface web. Em produção, o mesmo motor atende pelo WhatsApp oficial, consulta sistemas reais e entrega contexto para a equipe.
+            </p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                to="/demo"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-dark-bg hover:bg-gray-100"
+              >
+                Testar demo
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link
+                to="/agentes"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/15 px-6 py-3 text-sm font-bold text-white hover:bg-white/10"
+              >
+                Ver agentes
+              </Link>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* FAQ */}
-      <div className="max-w-3xl mx-auto px-6 py-12">
-        <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">FAQ</h2>
-        <div className="space-y-4">
-          <FAQ
-            q="A IA inventa coisas (alucina)?"
-            a="Não. Preços e informações clínicas vêm de uma base RAG com dados da empresa. O prompt tem regra explícita: se não tiver na base, a IA diz 'vou confirmar com a equipe'. Toda resposta é auditável."
-          />
-          <FAQ
-            q="Quanto custa por conversa?"
-            a="Em média R$ 0,02 a R$ 0,05 por conversa qualificada (8 turnos) usando Claude Haiku com prompt caching. Para 500 conversas/mês: ~R$ 25 de API + R$ 80 de infra = R$ 105/mês total."
-          />
-          <FAQ
-            q="Quanto tempo pra colocar na minha empresa?"
-            a="1 semana pro MVP funcional com a sua base. 2 semanas com integrações completas (CRM, agenda real, Meta Cloud API). O motor é o mesmo — muda só a base de conhecimento e os campos de qualificação."
-          />
-          <FAQ
-            q="E se o cliente xingar a IA?"
-            a="Detecção automática de tom hostil e frases-chave ('quero falar com humano', 'atendente'). Handoff imediato pro vendedor. A IA nunca revida ou se irrita."
-          />
-          <FAQ
-            q="Funciona em outros idiomas?"
-            a="Sim — troca o prompt e a base RAG. O modelo entende 50+ idiomas nativamente."
-          />
-          <FAQ
-            q="E se a API cair?"
-            a="Fallback roteirizado — o sistema responde com mensagens padrão e agenda retorno. Fila de mensagens pendentes pra re-enviar quando volta."
-          />
-        </div>
-      </div>
+        <section className="px-4 pb-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-4 md:grid-cols-3">
+              {steps.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <article key={step.title} className="relative rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-violet/25 to-brand-cyan/25 text-brand-cyan">
+                      <Icon className="h-6 w-6" aria-hidden="true" />
+                    </div>
+                    <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">Passo {index + 1}</p>
+                    <h2 className="mt-2 text-xl font-bold text-white">{step.title}</h2>
+                    <p className="mt-3 text-sm leading-6 text-gray-300">{step.desc}</p>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-      {/* CTA */}
-      <div className="bg-sofia-500 text-white px-6 py-8 text-center">
-        <h2 className="text-xl font-bold mb-2">Quer um agente assim no SEU WhatsApp?</h2>
-        <p className="text-sm opacity-90 mb-4">Fale comigo — demonstro em 5 minutos.</p>
-        <a
-          href={import.meta.env.VITE_CONTACT_URL || '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block px-6 py-3 bg-white text-sofia-600 font-bold rounded-full hover:bg-gray-100 transition-colors"
-        >
-          Falar agora →
-        </a>
-      </div>
-    </div>
-  );
-}
+        <section className="px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
+            {productionBlocks.map((block) => {
+              const Icon = block.icon;
+              return (
+                <article key={block.title} className="rounded-3xl border border-white/10 bg-dark-surface p-6">
+                  <Icon className="h-7 w-7 text-brand-cyan" aria-hidden="true" />
+                  <h2 className="mt-5 text-lg font-bold text-white">{block.title}</h2>
+                  <p className="mt-3 text-sm leading-6 text-gray-300">{block.desc}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
 
-function Step({ emoji, title, desc }: { emoji: string; title: string; desc: string }) {
-  return (
-    <div className="flex flex-col items-center">
-      <span className="text-4xl mb-2">{emoji}</span>
-      <p className="font-bold text-gray-900 text-sm">{title}</p>
-      <p className="text-xs text-gray-600">{desc}</p>
-    </div>
-  );
-}
+        <section className="px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 sm:p-10">
+            <h2 className="text-2xl font-bold text-white">Demo versus produção</h2>
+            <div className="mt-6 space-y-3">
+              {comparisons.map(([demo, prod]) => (
+                <div key={demo} className="grid gap-2 rounded-2xl border border-white/10 bg-dark-bg/50 p-4 text-sm sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+                  <span className="text-gray-400">{demo}</span>
+                  <ArrowRight className="hidden h-4 w-4 text-brand-cyan sm:block" aria-hidden="true" />
+                  <span className="font-medium text-white">{prod}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-function Arrow() {
-  return (
-    <div className="hidden md:flex items-center justify-center text-gray-300 text-2xl">
-      →
-    </div>
-  );
-}
+        <section className="px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-2xl font-bold text-white">Perguntas frequentes</h2>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {faqs.map((faq) => (
+                <article key={faq.q} className="rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+                  <h3 className="text-base font-bold text-white">{faq.q}</h3>
+                  <p className="mt-3 text-sm leading-6 text-gray-300">{faq.a}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
 
-function CompareRow({ demo, prod }: { demo: string; prod: string }) {
-  return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="flex-1 text-right text-gray-500">{demo}</span>
-      <span className="text-gray-300">→</span>
-      <span className="flex-1 font-medium text-gray-900">{prod}</span>
-    </div>
-  );
-}
-
-function FAQ({ q, a }: { q: string; a: string }) {
-  return (
-    <div className="border border-gray-200 rounded-lg p-4">
-      <h4 className="font-semibold text-gray-900 text-sm mb-1">"{q}"</h4>
-      <p className="text-xs text-gray-600 leading-relaxed">{a}</p>
+        <section className="px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <CTASection />
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

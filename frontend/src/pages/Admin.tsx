@@ -17,6 +17,8 @@ import AdminAgente from './admin/AdminAgente';
 
 type Tab = 'conversas' | 'leads' | 'custos' | 'agente';
 
+const IS_DEVELOPMENT = import.meta.env.DEV;
+
 export default function Admin() {
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem('admin_token');
@@ -114,9 +116,11 @@ export default function Admin() {
               Entrar
             </button>
           </form>
-          <p className="text-xs text-gray-500 mt-4 text-center">
-            Demo: admin / admin
-          </p>
+          {IS_DEVELOPMENT && (
+            <p className="text-xs text-gray-500 mt-4 text-center">
+              Demo local: admin / admin
+            </p>
+          )}
         </div>
       </div>
     );

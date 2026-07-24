@@ -15,6 +15,10 @@ interface CreateSessionResponse {
   agent_name: string;
   company_name: string;
   suggestions: string[];
+  opening_message?: string;
+  crm_fields?: Array<{ key: string; label: string; priority: string }>;
+  business_mode?: string;
+  contact_url?: string;
 }
 
 interface SendMessageResponse {

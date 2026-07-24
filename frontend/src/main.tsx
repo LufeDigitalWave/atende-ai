@@ -5,7 +5,9 @@ import App from './App';
 import './index.css';
 
 const Admin = lazy(() => import('./pages/Admin'));
+const Agentes = lazy(() => import('./pages/Agentes'));
 const ComoFunciona = lazy(() => import('./pages/ComoFunciona'));
+const Demo = lazy(() => import('./pages/Demo'));
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -17,6 +19,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       }>
         <Routes>
           <Route path="/" element={<App />} />
+          <Route path="/demo" element={<Demo />} />
+          <Route path="/agentes" element={<Agentes />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/como-funciona" element={<ComoFunciona />} />
         </Routes>

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlparse
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -19,7 +20,7 @@ class Settings(BaseSettings):
     # Core
     environment: Literal["development", "production", "test"] = "development"
     log_level: str = "INFO"
-    contact_url: str = "https://wa.me/5511913289497"
+    contact_url: str = "https://wa.me/5511999999999"
 
     # Database
     database_url: str = Field(
@@ -82,6 +83,15 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         """Parse comma-separated CORS origins."""
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @field_validator("contact_url")
+    @classmethod
+    def validate_contact_url(cls, v: str) -> str:
+        parsed = urlparse(v)
+        allowed_hosts = {"wa.me", "api.whatsapp.com"}
+        if parsed.scheme != "https" or parsed.hostname not in allowed_hosts:
+            return "https://wa.me/5511999999999"
+        return v
 
     @field_validator("anthropic_api_key")
     @classmethod
