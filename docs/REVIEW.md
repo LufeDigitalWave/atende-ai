@@ -2,7 +2,30 @@
 
 > Checklist dos critérios de aceite do `README.md` + roteiro do `DEMO.md` nos DOIS providers (fake + Opus 4.8).
 
-## Status: ✅ **TODOS OS CRITÉRIOS ATENDIDOS**
+## Status 2026-07-24: ✅ Sprint 1 WhatsApp Agents validada
+
+Validações executadas após a vitrine WhatsApp Agents:
+
+| Validação | Resultado |
+| --- | --- |
+| Frontend build | ✅ passou |
+| Frontend unit tests | ✅ 7/7 passou |
+| Frontend Playwright E2E | ✅ 18/18 passou |
+| Backend pytest | ✅ 115 passed, 9 xfailed |
+| Visual smoke desktop/mobile | ✅ `/`, `/demo`, `/agentes`, `/como-funciona` |
+| Grep por telefone real antigo | ✅ sem matches |
+
+Rotas públicas atuais:
+
+| Rota | Função |
+| --- | --- |
+| `/` | Landing comercial WhatsApp Agents |
+| `/demo` | Demo SDR interativa |
+| `/agentes` | Catálogo de 6 agentes |
+| `/como-funciona` | Explicação demo→produção |
+| `/admin` | Admin interno com JWT |
+
+## Status original: ✅ **TODOS OS CRITÉRIOS ATENDIDOS**
 
 ---
 
@@ -25,7 +48,7 @@
 ## 2. Roteiro do DEMO.md — walkthrough manual (fake provider)
 
 ### Passo 1 — Abertura (15s)
-**Ação:** Abrir `http://localhost:5173`
+**Ação:** Abrir `http://localhost:5173/demo`
 **Resultado esperado:**
 - Header verde "Clínica Renova — Sofia (SDR IA)"
 - Subtítulo: "Converse com Sofia e veja seu lead sendo qualificado em tempo real"

@@ -7,7 +7,7 @@
 
 ## Antes da call
 
-1. Abra duas abas lado a lado: demo `/` e admin `/admin` já logado.
+1. Abra a landing `/` para contexto comercial, depois a demo `/demo`; mantenha o admin `/admin` já logado apenas para operação interna.
 2. Limpe sessão anterior (botão discreto no header admin: "Reset demo" — não aparece pro visitante).
 3. Tenha em mãos `PROPOSTA_SNIPPET.md` (proposta comercial) e `COST_MODEL.md` (estimativa de custo).
 4. ZOOM 100% no navegador; áudio off (a demo não tem som).

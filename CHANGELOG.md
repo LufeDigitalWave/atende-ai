@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- WhatsApp Agents commercial landing at `/` with premium B2B positioning.
+- SDR demo moved to `/demo` while preserving the interactive chat/CRM flow.
+- Agents catalog at `/agentes` covering SDR, Support, Appointment, FAQ/RAG, Civic, and Collections agents.
+- Marketing components (`SiteHeader`, `AgentCard`, `CTASection`) and centralized agent catalog data.
+- Playwright marketing E2E coverage for landing and agents catalog.
+- Safe WhatsApp contact URL helper with HTTPS host allowlist (`wa.me`, `api.whatsapp.com`).
 - Operational kill switch with admin toggle (GET/POST /api/admin/killswitch)
 - Soft delete for sessions and leads (deleted_at column + Alembic migration 0002)
 - Frontend contact_url from backend config (replaces hardcoded WhatsApp link)
@@ -22,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- README repositioned from standalone SDR demo to WhatsApp Agents portfolio showcase.
+- `/como-funciona` redesigned with Lucide icons and clearer demo-to-production explanation.
+- Playwright mobile project now uses Chromium mobile viewport to avoid local WebKit dependency.
+- Vitest excludes `e2e/**` so Playwright specs are not imported as unit tests.
+- Public contact fallbacks now use fictitious WhatsApp number; real contact must come from `.env`/production env.
+- Admin credential hint is shown only in development builds.
 - reset.py now soft-deletes sessions instead of hard DELETE
 - Handoff is suppressed when kill_switch_handoff=false
 
