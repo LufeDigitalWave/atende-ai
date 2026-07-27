@@ -6,6 +6,7 @@ import { CONTACT_URL } from '../../lib/constants';
 const navItems = [
   { to: '/', label: 'Início' },
   { to: '/agentes', label: 'Agentes' },
+  { to: '/pricing', label: 'Pricing' },
   { to: '/como-funciona', label: 'Como funciona' },
   { to: '/demo', label: 'Demo' },
 ];

@@ -44,6 +44,8 @@ Acesse:
 
 A interface administrativa existe para desenvolvimento local e operação interna; configure credenciais fortes no `.env` antes de expor qualquer ambiente.
 
+![Demo](docs/commercial/demo.gif)
+
 Escolha um nicho, envie uma mensagem e observe:
 
 - streaming de resposta token por token;

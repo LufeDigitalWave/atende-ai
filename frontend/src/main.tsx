@@ -8,6 +8,7 @@ const Admin = lazy(() => import('./pages/Admin'));
 const Agentes = lazy(() => import('./pages/Agentes'));
 const ComoFunciona = lazy(() => import('./pages/ComoFunciona'));
 const Demo = lazy(() => import('./pages/Demo'));
+const Pricing = lazy(() => import('./pages/Pricing'));
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<App />} />
           <Route path="/demo" element={<Demo />} />
           <Route path="/agentes" element={<Agentes />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/como-funciona" element={<ComoFunciona />} />
         </Routes>

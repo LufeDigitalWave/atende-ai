@@ -20,4 +20,18 @@ test.describe('Marketing pages', () => {
       await expect(page.getByRole('heading', { name }).first()).toBeVisible();
     }
   });
+
+  test('pricing page shows packages and simulator', async ({ page }) => {
+    await page.goto('/pricing');
+
+    await expect(page.getByRole('heading', { name: 'Starter', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pro', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Business', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Simulador/ })).toBeVisible();
+
+    const slider = page.getByRole('slider', { name: /conversas/i });
+    await expect(slider).toBeVisible();
+    await slider.fill('2000');
+    await expect(page.getByText('2.000', { exact: true })).toBeVisible();
+  });
 });
