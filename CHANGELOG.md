@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Marketing components (`SiteHeader`, `AgentCard`, `CTASection`) and centralized agent catalog data.
 - Playwright marketing E2E coverage for landing and agents catalog.
 - Safe WhatsApp contact URL helper with HTTPS host allowlist (`wa.me`, `api.whatsapp.com`).
+- Pricing page at `/pricing` with interactive cost simulator (100–5000 conversations/month).
+- Commercial kit: pitch.md, proposta.md, pricing.md, roteiro-demo.md, checklist-venda.md.
+- PPTX pitch deck (8 slides) and XLSX pricing calculator (3 sheets).
+- Production screenshots (7 captures desktop + mobile).
+- Demo GIF (5 frames via Playwright mock).
+- favicon.svg, apple-touch-icon.png, og-image.png (1200×630).
+- robots.txt and sitemap.xml for SEO indexing.
+- `X-DNS-Prefetch-Control: on` header.
+- CSP `frame-ancestors 'self'` directive.
 - Operational kill switch with admin toggle (GET/POST /api/admin/killswitch)
 - Soft delete for sessions and leads (deleted_at column + Alembic migration 0002)
 - Frontend contact_url from backend config (replaces hardcoded WhatsApp link)
