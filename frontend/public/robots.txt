@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://atendeai.lufedigitalwave.com.br/sitemap.xml
