@@ -83,6 +83,7 @@ def _build_lead_summary(lead) -> str:
 
 class SessionCreateRequest(BaseSchema):
     niche: str = ""
+    agent_type: str = "sdr"  # "sdr" or "faq_rag"
 
 
 @router.post(
@@ -121,10 +122,17 @@ async def create_session(
     niche = sanitize_niche(niche)
     niche_profile = await generate_niche_profile(niche)
 
+    # Determine agent type
+    agent_type = (body.agent_type if body else "sdr") or "sdr"
+    if agent_type not in ("sdr", "faq_rag"):
+        agent_type = "sdr"
+
     # Create session
     session = Session(
         ip_hash=ip_hash,
         status=SessionStatus.active,
+        agent_type=agent_type,
+        niche=niche,
     )
     db.add(session)
     await db.commit()
@@ -367,8 +375,26 @@ async def send_message(
             logger.warning(f"v3 cache miss for niche {session_niche}, regenerating")
             niche_profile = await generate_niche_profile(session_niche)
 
-        # Render system prompt from NicheProfile (template v3)
-        system_prompt = render_prompt(niche_profile)
+        # Render system prompt from NicheProfile (template v3 or FAQ/RAG)
+        system_prompt = render_prompt(niche_profile, agent_type=session.agent_type)
+
+        # RAG retrieval for FAQ/RAG agent type
+        rag_context = ""
+        if session.agent_type == "faq_rag":
+            from app.services.retriever import get_retriever
+            retriever = get_retriever()
+            try:
+                rag_results = await retriever.retrieve(db, content, top_k=5)
+                if rag_results:
+                    rag_context = "\n\n--- BASE DE CONHECIMENTO (responda com base nestes trechos) ---\n"
+                    for i, r in enumerate(rag_results, 1):
+                        rag_context += f"\n[{i}] (fonte: {r.source_file})\n{r.chunk_text}\n"
+                    rag_context += "\n--- FIM DA BASE ---\n\nIMPORTANTE: responda APENAS com informações presentes acima. Se a resposta não estiver na base, diga que vai verificar com a equipe.\n"
+            except Exception as e:
+                logger.warning(f"RAG retrieval failed: {e}")
+
+        if rag_context:
+            system_prompt = system_prompt + "\n" + rag_context
 
         # Build history (last 12 messages)
         history_stmt = (
@@ -438,62 +464,59 @@ async def send_message(
         db.add(agent_msg)
         await db.commit()
 
-        # Extract fields via LLM (v3 — dynamic per niche)
-        existing_summary = _build_lead_summary(lead)
-        extraction = await extract_lead_data(
-            body.content, agent_response, niche_profile, existing_summary
-        )
+        # --- Lead extraction and scoring (SDR only) ---
+        if session.agent_type != "faq_rag":
+            # Extract fields via LLM (v3 — dynamic per niche)
+            existing_summary = _build_lead_summary(lead)
+            extraction = await extract_lead_data(
+                body.content, agent_response, niche_profile, existing_summary
+            )
 
-        # Also run heuristic fallback and merge any fields it found that LLM missed
-        from app.services.lead_extractor import _heuristic_fallback
-        heuristic_result = _heuristic_fallback(body.content, agent_response, niche_profile)
-        for hf in heuristic_result.extracted_fields:
-            if hf.value is not None:
-                # Only add if LLM didn't already find this key
-                existing_keys = {ef.key for ef in extraction.extracted_fields if ef.value is not None}
-                if hf.key not in existing_keys:
-                    extraction.extracted_fields.append(hf)
+            # Also run heuristic fallback and merge any fields it found that LLM missed
+            from app.services.lead_extractor import _heuristic_fallback
+            heuristic_result = _heuristic_fallback(body.content, agent_response, niche_profile)
+            for hf in heuristic_result.extracted_fields:
+                if hf.value is not None:
+                    existing_keys = {ef.key for ef in extraction.extracted_fields if ef.value is not None}
+                    if hf.key not in existing_keys:
+                        extraction.extracted_fields.append(hf)
 
-        # Apply extraction to legacy lead columns (backward compat with frontend SSE)
-        legacy_fields = extraction.to_legacy_dict()
-        if legacy_fields.get("name") and not lead.name:
-            lead.name = legacy_fields["name"]
-        if legacy_fields.get("service_interest") and not lead.service_interest:
-            lead.service_interest = legacy_fields["service_interest"]
-        if legacy_fields.get("complaint") and not lead.complaint:
-            lead.complaint = legacy_fields["complaint"]
+            # Apply extraction to legacy lead columns (backward compat with frontend SSE)
+            legacy_fields = extraction.to_legacy_dict()
+            if legacy_fields.get("name") and not lead.name:
+                lead.name = legacy_fields["name"]
+            if legacy_fields.get("service_interest") and not lead.service_interest:
+                lead.service_interest = legacy_fields["service_interest"]
+            if legacy_fields.get("complaint") and not lead.complaint:
+                lead.complaint = legacy_fields["complaint"]
 
-        # Emit only NON-NULL fields that represent new information
-        all_fields = {ef.key: ef.value for ef in extraction.extracted_fields if ef.value is not None}
-        # Merge legacy aliases (only non-null)
-        for k, v in legacy_fields.items():
-            if v is not None:
-                all_fields[k] = v
-        if all_fields:
-            yield f"event: lead_update\ndata: {json.dumps({'fields': all_fields})}\n\n"
+            # Emit only NON-NULL fields that represent new information
+            all_fields = {ef.key: ef.value for ef in extraction.extracted_fields if ef.value is not None}
+            for k, v in legacy_fields.items():
+                if v is not None:
+                    all_fields[k] = v
+            if all_fields:
+                yield f"event: lead_update\ndata: {json.dumps({'fields': all_fields})}\n\n"
 
-        # Score (v3 — contextual by intent, CUMULATIVE across turns)
-        # Build cumulative extraction: combine lead's existing extracted fields with this turn's new ones
+            # Score (v3 — contextual by intent, CUMULATIVE across turns)
+            cumulative_extraction = _build_cumulative_extraction(lead, extraction, niche_profile)
+            new_score, breakdown = compute_score_v3(cumulative_extraction, niche_profile)
+            if new_score != lead.score:
+                lead.score = new_score
+                lead.score_breakdown = breakdown
+                yield f"event: score_update\ndata: {json.dumps({'total': new_score, 'breakdown': breakdown})}\n\n"
 
-        # Get previously extracted fields from lead.extracted_data (JSONB)
-        # For now, reconstruct from legacy columns + score_breakdown
-        cumulative_extraction = _build_cumulative_extraction(lead, extraction, niche_profile)
-        new_score, breakdown = compute_score_v3(cumulative_extraction, niche_profile)
-        if new_score != lead.score:
-            lead.score = new_score
-            lead.score_breakdown = breakdown
-            yield f"event: score_update\ndata: {json.dumps({'total': new_score, 'breakdown': breakdown})}\n\n"
-
-        # State transition (keep legacy FSM for now, enhanced with handoff detection)
-        old_state = lead.state
-        if extraction.should_handoff and is_enabled("handoff"):
-            lead.state = LeadState.handoff
-            yield f"event: state_update\ndata: {json.dumps({'from': old_state.value, 'to': 'handoff'})}\n\n"
-        else:
-            trans = auto_transition(lead)
-            if trans and trans.allowed:
-                lead.state = trans.to_state
-                yield f"event: state_update\ndata: {json.dumps({'from': old_state.value, 'to': trans.to_state.value})}\n\n"
+        # State transition (SDR only — FAQ/RAG doesn't qualify leads)
+        if session.agent_type != "faq_rag":
+            old_state = lead.state
+            if extraction.should_handoff and is_enabled("handoff"):
+                lead.state = LeadState.handoff
+                yield f"event: state_update\ndata: {json.dumps({'from': old_state.value, 'to': 'handoff'})}\n\n"
+            else:
+                trans = auto_transition(lead)
+                if trans and trans.allowed:
+                    lead.state = trans.to_state
+                    yield f"event: state_update\ndata: {json.dumps({'from': old_state.value, 'to': trans.to_state.value})}\n\n"
 
         await db.commit()
 

@@ -18,6 +18,11 @@ class SessionStatus(str, enum.Enum):
     expired = "expired"
 
 
+class AgentType(str, enum.Enum):
+    sdr = "sdr"
+    faq_rag = "faq_rag"
+
+
 class Session(Base):
     __tablename__ = "sessions"
 
@@ -37,6 +42,10 @@ class Session(Base):
         nullable=False,
         index=True,
     )
+    agent_type: Mapped[str] = mapped_column(
+        String(32), default="sdr", nullable=False, index=True
+    )
+    niche: Mapped[str | None] = mapped_column(String(100), nullable=True)
     ip_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, index=True
