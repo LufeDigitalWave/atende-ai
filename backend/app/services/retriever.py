@@ -28,9 +28,9 @@ class Retriever(ABC):
 
     @abstractmethod
     async def retrieve(
-        self, session: AsyncSession, query: str, top_k: int = 3
+        self, session: AsyncSession, query: str, top_k: int = 3, namespace: str = "default"
     ) -> list[RetrievalResult]:
-        """Retrieve top_k most similar chunks."""
+        """Retrieve top_k most similar chunks filtered by namespace."""
         pass
 
 
@@ -38,13 +38,14 @@ class PgvectorRetriever(Retriever):
     """Vector similarity search via pgvector."""
 
     async def retrieve(
-        self, session: AsyncSession, query: str, top_k: int = 3
+        self, session: AsyncSession, query: str, top_k: int = 3, namespace: str = "default"
     ) -> list[RetrievalResult]:
         embedder = get_embedder()
         query_embedding = await embedder.embed(query)
 
         stmt = (
             select(KnowledgeChunk)
+            .where(KnowledgeChunk.namespace == namespace)
             .order_by(KnowledgeChunk.embedding.op("<->")(query_embedding))
             .limit(top_k)
         )
@@ -71,7 +72,7 @@ class TsvectorRetriever(Retriever):
     _MAX_KW_LENGTH = 64
 
     async def retrieve(
-        self, session: AsyncSession, query: str, top_k: int = 3
+        self, session: AsyncSession, query: str, top_k: int = 3, namespace: str = "default"
     ) -> list[RetrievalResult]:
         # Simple keyword match — lower quality but works offline
         # Uses parameterized queries to prevent SQL injection.
@@ -91,11 +92,12 @@ class TsvectorRetriever(Retriever):
         stmt = text(
             f"""SELECT chunk_text, source_file, 0.5 as similarity
                FROM knowledge_chunks
-               WHERE {conditions}
+               WHERE namespace = :ns AND ({conditions})
                LIMIT :limit"""
         )
         # Bind each keyword wrapped in % for substring match
         params = {f"kw_{i}": f"%{kw}%" for i, kw in enumerate(keywords)}
+        params["ns"] = namespace
         params["limit"] = top_k
 
         rows = await session.execute(stmt, params)

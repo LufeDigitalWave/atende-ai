@@ -22,6 +22,9 @@ class KnowledgeChunk(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
+    namespace: Mapped[str] = mapped_column(
+        String(100), nullable=False, default="default", index=True
+    )
     source_file: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     chunk_text: Mapped[str] = mapped_column(Text, nullable=False)
@@ -35,8 +38,9 @@ class KnowledgeChunk(Base):
     )
 
     __table_args__ = (
-        Index("ix_knowledge_source_idx", "source_file", "chunk_index", unique=True),
+        Index("ix_knowledge_ns_source_idx", "namespace", "source_file", "chunk_index", unique=True),
         Index("ix_knowledge_tsv", "tsv", postgresql_using="gin"),
+        Index("ix_knowledge_namespace", "namespace"),
     )
 
     def __repr__(self) -> str:
