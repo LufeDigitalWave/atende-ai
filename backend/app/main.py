@@ -104,10 +104,11 @@ async def shutdown_event() -> None:
 # Routes
 from datetime import UTC
 
-from app.api import routes_admin, routes_chat
+from app.api import routes_admin, routes_chat, routes_funnel
 
 app.include_router(routes_chat.router)
 app.include_router(routes_admin.router)
+app.include_router(routes_funnel.router)
 
 
 @app.get("/api/health")

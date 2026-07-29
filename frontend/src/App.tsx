@@ -5,6 +5,8 @@ import CTASection from './components/marketing/CTASection';
 import SiteHeader from './components/marketing/SiteHeader';
 import { WHATSAPP_AGENTS } from './data/agents';
 import { CONTACT_URL } from './lib/constants';
+import { trackFunnel } from './lib/funnel';
+import { useEffect } from 'react';
 
 const proofItems = [
   'WhatsApp Cloud API oficial',
@@ -37,6 +39,8 @@ const differentiators = [
 ];
 
 export default function App() {
+  useEffect(() => { trackFunnel('view_landing'); }, []);
+
   return (
     <div className="min-h-screen bg-dark-bg text-white">
       <SiteHeader />

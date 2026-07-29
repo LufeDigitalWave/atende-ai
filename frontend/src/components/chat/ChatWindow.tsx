@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSessionStore } from '../../lib/store';
 import { sendMessage, ApiError } from '../../lib/api';
 import { buildWhatsAppContactUrl } from '../../lib/constants';
+import { trackFunnel } from '../../lib/funnel';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import QuickReplies from './QuickReplies';
@@ -77,6 +78,11 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
   const handleSend = async (content: string) => {
     if (!content.trim() || inputDisabled || isCapped) return;
 
+    // Track first message
+    if (messages.filter(m => m.role === 'user').length === 0) {
+      trackFunnel('first_message', { sessionId });
+    }
+
     // Add user message
     const userMsg = {
       id: uuid(),
@@ -138,6 +144,9 @@ export default function ChatWindow({ sessionId, agentName = 'Sofia', companyName
         // onStateUpdate
         (from, to) => {
           setState(to);
+          if (to === 'qualificado' || to === 'handoff') {
+            trackFunnel('reached_qualified', { from, to, sessionId });
+          }
           addEvent({
             id: uuid(),
             type: 'state_changed',

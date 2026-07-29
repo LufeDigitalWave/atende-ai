@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { trackFunnel } from '../lib/funnel';
 import { useSessionStore } from '../lib/store';
 import ChatWindow from '../components/chat/ChatWindow';
 import CRMView from '../components/crm/CRMView';
@@ -37,6 +38,7 @@ export default function Demo() {
   }, [agentMeta, isCreatingSession, sessionId, setSessionId]);
 
   const handleNicheSelect = async (niche: string) => {
+    trackFunnel('start_demo', { niche });
     setLoading(true);
     setIsCreatingSession(true);
     setError(null);

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackFunnel } from '../lib/funnel';
 import { CheckCircle2, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CTASection from '../components/marketing/CTASection';
@@ -17,6 +18,7 @@ function suggestPackage(conversas: number): string {
 }
 
 export default function Pricing() {
+  useEffect(() => { trackFunnel('clicked_pricing'); }, []);
   const [conversas, setConversas] = useState(500);
 
   const llmCost = Math.round(conversas * LLM_COST_PER_CONVERSATION);

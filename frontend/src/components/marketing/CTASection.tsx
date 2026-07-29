@@ -1,6 +1,7 @@
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CONTACT_URL } from '../../lib/constants';
+import { trackFunnel } from '../../lib/funnel';
 
 export default function CTASection() {
   return (
@@ -22,6 +23,7 @@ export default function CTASection() {
             href={CONTACT_URL}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackFunnel('clicked_whatsapp', { source: 'cta_section' })}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-dark-bg transition-transform hover:-translate-y-0.5 hover:bg-gray-100"
           >
             Pedir piloto no WhatsApp

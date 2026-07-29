@@ -206,6 +206,43 @@ async def get_leads_kanban(
     return result
 
 
+@router.get("/leads/export")
+async def export_leads_csv(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+):
+    """Export all leads as CSV (admin only)."""
+    import csv
+    import io
+
+    from fastapi.responses import StreamingResponse
+
+    leads = list((await db.scalars(
+        select(Lead).where(Lead.deleted_at.is_(None)).order_by(desc(Lead.updated_at))
+    )).all())
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "name", "service_interest", "complaint", "score", "state", "updated_at"])
+    for lead in leads:
+        writer.writerow([
+            str(lead.id),
+            lead.name or "",
+            lead.service_interest or "",
+            lead.complaint or "",
+            lead.score,
+            lead.state.value if lead.state else "novo",
+            lead.updated_at.isoformat() if lead.updated_at else "",
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=leads.csv"},
+    )
+
+
 @router.get(
     "/custos",
     response_model=AdminCostsResponse,
