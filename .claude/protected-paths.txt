@@ -1,0 +1,17 @@
+# O harness nao se edita a si mesmo
+.claude/*
+.claude/**
+# Guardrails operacionais e sua configuracao
+tests/guardrails/**
+# Rate limit
+backend/app/services/rate_limit.py
+# Budget / token cap
+backend/app/services/budget.py
+# Kill switch
+backend/app/services/killswitch.py
+# Session TTL e soft delete
+backend/app/services/reset.py
+# Security headers e CSP
+frontend/nginx.conf
+# CI workflow
+.github/workflows/**

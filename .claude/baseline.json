@@ -1,0 +1,32 @@
+{
+  "date": "2026-07-28",
+  "suites": {
+    "backend_pytest": {
+      "passed": 115,
+      "xfailed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontend_vitest": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontend_e2e_playwright": {
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "guardrails": {
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0
+  },
+  "totals": {
+    "passed": 168,
+    "xfailed": 9,
+    "failed": 0,
+    "skipped": 0
+  }
+}
