@@ -197,7 +197,7 @@ Medidas adicionais:
 | Guardrail | Configuração |
 | --- | --- |
 | Cap por sessão | 30 mensagens |
-| Rate limit | 2s entre mensagens + 50 sessões/IP/h |
+| Rate limit | 2s entre mensagens + 5 sessões/IP/h |
 | Budget diário | 200k tokens com alerting webhook |
 | Input max | 500 caracteres |
 | Session TTL | 24h com soft delete |
@@ -345,7 +345,7 @@ frontend/
 
 - 30+ projetos de IA/automação entregues em 3 anos.
 - 70+ workflows n8n ativos em produção simultânea.
-- 290+ testes automatizados em plataforma SaaS.
+- 142 testes automatizados (115 backend + 7 frontend + 20 E2E).
 - Zero banimentos com API oficial Meta em 3 anos.
 - Demo pública com CRM ao vivo: https://atendeai.lufedigitalwave.com.br
 - Custo por conversa: R$ 0,02 a R$ 0,05 com Claude Haiku + caching.

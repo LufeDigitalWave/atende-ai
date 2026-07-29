@@ -3,6 +3,7 @@
 # exit 2 = BLOQUEIA e devolve o stderr ao modelo. exit 0 = permite.
 # exit 1 NAO bloqueia nada — nunca use 1 aqui.
 set -uo pipefail
+shopt -s globstar 2>/dev/null || true
 
 INPUT="$(cat)"
 ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"

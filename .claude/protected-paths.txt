@@ -1,17 +1,58 @@
 # O harness nao se edita a si mesmo
 .claude/*
 .claude/**
+.claude/settings.json
+.claude/hooks/*
+.claude/hooks/**
+.claude/skills/*
+.claude/skills/**
+
 # Guardrails operacionais e sua configuracao
 tests/guardrails/**
-# Rate limit
+tests/conftest.py
+
+# Auth / seguranca / credenciais / LGPD hashing
+backend/app/core/security.py
+backend/app/core/ip_hash.py
+backend/app/core/config.py
+backend/app/core/logging.py
+
+# Modelos com PII ou auditoria financeira
+backend/app/models/session.py
+backend/app/models/lead.py
+backend/app/models/lead_event.py
+backend/app/models/message.py
+backend/app/models/usage_log.py
+backend/app/models/admin_user.py
+
+# Schemas de validacao de entrada
+backend/app/schemas/chat.py
+
+# Endpoints admin (login JWT + PII + kill-switch toggle)
+backend/app/api/routes_admin.py
+
+# Migrations (podem destruir schema PII / indices)
+backend/alembic/versions/**
+backend/alembic.ini
+backend/alembic/env.py
+
+# Guardrails de servico
 backend/app/services/rate_limit.py
-# Budget / token cap
 backend/app/services/budget.py
-# Kill switch
 backend/app/services/killswitch.py
-# Session TTL e soft delete
 backend/app/services/reset.py
-# Security headers e CSP
+
+# Configuracao de deploy / proxy / segredos
+docker-compose.yml
 frontend/nginx.conf
-# CI workflow
+frontend/Dockerfile
+backend/Dockerfile
+.env.example
+
+# Frontend admin client (token Bearer + localStorage)
+frontend/src/lib/admin-api.ts
+frontend/src/pages/Admin.tsx
+
+# CI
 .github/workflows/**
+scripts/verify_baseline.sh
