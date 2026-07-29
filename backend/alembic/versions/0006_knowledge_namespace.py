@@ -24,8 +24,9 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.add_column("knowledge_chunks", sa.Column("namespace", sa.String(100), nullable=False, server_default="default"))
     op.create_index("ix_knowledge_namespace", "knowledge_chunks", ["namespace"])
-    # Replace old unique index with namespace-aware one
-    op.drop_index("ix_knowledge_source_idx", "knowledge_chunks")
+    # Drop the old unique constraint/index (Postgres may store it as constraint)
+    op.execute("ALTER TABLE knowledge_chunks DROP CONSTRAINT IF EXISTS ix_knowledge_source_idx")
+    op.execute("DROP INDEX IF EXISTS ix_knowledge_source_idx")
     op.create_index("ix_knowledge_ns_source_idx", "knowledge_chunks", ["namespace", "source_file", "chunk_index"], unique=True)
 
 
