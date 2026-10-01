@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import sys
 from pathlib import Path
 
 
@@ -31,11 +30,10 @@ async def ingest(namespace: str, path: Path, clear_first: bool = False) -> int:
     """Ingest markdown/text files into knowledge_chunks for a namespace."""
     from sqlalchemy import delete, select
 
-    from app.core.database import get_engine, get_session_factory
+    from app.core.database import get_session_factory
     from app.models.knowledge import KnowledgeChunk
     from app.services.embedder import get_embedder
 
-    engine = get_engine()
     factory = get_session_factory()
     embedder = get_embedder()
 

@@ -5,17 +5,16 @@ Admin endpoint to aggregate funnel data.
 """
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
-from typing import Literal
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.routes_admin import get_current_admin
 from app.core.database import get_db
 from app.core.ip_hash import get_client_ip, hash_ip
-from app.api.routes_admin import get_current_admin
 from app.models.funnel_event import FunnelEvent, FunnelStep
 
 router = APIRouter(tags=["funnel"])

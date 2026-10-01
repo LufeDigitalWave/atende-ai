@@ -385,7 +385,7 @@ async def send_message(
             retriever = get_retriever()
             rag_namespace = session.niche or "default"
             try:
-                rag_results = await retriever.retrieve(db, content, top_k=5, namespace=rag_namespace)
+                rag_results = await retriever.retrieve(db, body.content, top_k=5, namespace=rag_namespace)
                 if rag_results:
                     rag_context = "\n\n--- BASE DE CONHECIMENTO (responda com base nestes trechos) ---\n"
                     for i, r in enumerate(rag_results, 1):
